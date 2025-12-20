@@ -9,5 +9,6 @@ pydantic==2.12.5
 pydantic_core==2.41.5
 SQLAlchemy==2.0.45
 sqlmodel==0.0.27
+tinytag==2.2.0
 typing-inspection==0.4.2
 typing_extensions==4.15.0
