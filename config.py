@@ -9,5 +9,7 @@ COLOR_TEXT = "white"
 FONT_SANS_SERIF = "Arial"    
 
 # icons
-LOGO_BOX = icons.load("logo_box", (176, 130))
-LOGO = icons.load("logo", (128, 25))
+ICON_LOGO_BOX = icons.load("logo_box", (176, 130))
+ICON_LOGO = icons.load("logo", (128, 25))
+ICON_PLAY_BUTTON = icons.load("play", (32, 32))
+ICON_PAUSE_BUTTON = icons.load("pause", (32, 32))
