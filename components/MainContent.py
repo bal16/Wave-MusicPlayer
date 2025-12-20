@@ -6,7 +6,7 @@ class MainContent(ctk.CTkFrame):
         super().__init__(master, **kwargs)
         
         # Header text
-        self.lbl_header = ctk.CTkLabel(self, text="Daftar Musik", font=(FONT_SANS_SERIF, 20, "bold"))
+        self.lbl_header = ctk.CTkLabel(self, text="All Musics", font=(FONT_SANS_SERIF, 20, "bold"))
         self.lbl_header.pack(pady=30, padx=40, anchor="w")
 
         # Scrollable Song List
