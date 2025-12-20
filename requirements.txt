@@ -1,5 +1,13 @@
+annotated-types==0.7.0
 customtkinter==5.2.2
 darkdetect==0.8.0
+greenlet==3.3.0
 loguru==0.7.3
 packaging==25.0
 pillow==12.0.0
+pydantic==2.12.5
+pydantic_core==2.41.5
+SQLAlchemy==2.0.45
+sqlmodel==0.0.27
+typing-inspection==0.4.2
+typing_extensions==4.15.0
