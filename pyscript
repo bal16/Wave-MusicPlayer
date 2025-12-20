@@ -1,0 +1,94 @@
+#!/usr/bin/env bash
+set -euo pipefail
+
+# Define system python and prefer venv python if present
+SYS_PY="${PYTHON:-python3}"
+VENV_PY="$SYS_PY"
+if [[ -x ".venv/bin/python" ]]; then
+  VENV_PY=".venv/bin/python"
+fi
+PIP="$VENV_PY -m pip"
+
+usage() {
+  cat <<EOF
+Usage: $0 [setup|freeze|install|start|add|help]
+
+Commands:
+  setup    Create .venv and activate it (when sourced)
+  freeze   Freeze current env to requirements.txt
+  install  Install dependencies from requirements.txt
+  start    Run the app (python main.py)
+  add      Install package(s) via pip and update requirements.txt
+  help     Show this help
+
+Activate venv in current shell (must use source):
+  source ./pyscript setup          # create + activate
+  # or later:
+  source .venv/bin/activate        # activate manually
+
+Optional alias (add to ~/.bashrc):
+  function pys(){ source /mnt/d/Bal/Collage/Project/Wave-MusicPlayer/pyscript "\$@"; }
+  source ~/.bashrc
+  # then use:
+  pys setup | install | start | add
+
+Examples:
+  ./pyscript setup                 # create .venv (no activation)
+  ./pyscript install
+  ./pyscript start
+  ./pyscript add requests
+EOF
+}
+
+is_sourced() {
+  [[ "${BASH_SOURCE[0]}" != "$0" ]]
+}
+
+cmd="${1:-help}"
+
+case "$cmd" in
+  setup)
+    if [[ ! -d .venv ]]; then
+      "$SYS_PY" -m venv .venv
+      echo "Created .venv"
+    else
+      echo ".venv already exists"
+    fi
+    if is_sourced; then
+      # shellcheck disable=SC1091
+      source .venv/bin/activate
+      echo "Activated .venv (python: $(command -v python))"
+    else
+      echo "To activate in current shell, run: source .venv/bin/activate"
+      echo "Or: source $0 setup"
+    fi
+    ;;
+  freeze)
+    $PIP freeze > requirements.txt
+    echo "Wrote requirements.txt"
+    ;;
+  install)
+    if [[ -f requirements.txt ]]; then
+      $PIP install -r requirements.txt
+    else
+      echo "requirements.txt not found. Run: $0 freeze"
+      exit 1
+    fi
+    ;;
+  start)
+    $VENV_PY main.py
+    ;;
+  add)
+    if [[ $# -lt 2 ]]; then
+      echo "Usage: $0 add <package> [<package> ...]"
+      exit 1
+    fi
+    shift
+    $PIP install "$@"
+    $PIP freeze > requirements.txt
+    echo "Installed: $* and updated requirements.txt"
+    ;;
+  help|*)
+    usage
+    ;;
+esac
