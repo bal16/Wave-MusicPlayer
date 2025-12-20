@@ -1,5 +1,5 @@
 import customtkinter as ctk
-from config import COLOR_ACCENT, COLOR_BG, LOGO_BOX
+from config import COLOR_ACCENT, COLOR_BG, ICON_LOGO_BOX
 
 class SplashScreen(ctk.CTkToplevel):
     def __init__(self, parent):
@@ -23,7 +23,7 @@ class SplashScreen(ctk.CTkToplevel):
         self.logo_frame.pack(expand=True, fill="both")
         
         
-        self.lbl_icon = ctk.CTkLabel(self.logo_frame, text="", image=LOGO_BOX)
+        self.lbl_icon = ctk.CTkLabel(self.logo_frame, text="", image=ICON_LOGO_BOX)
         self.lbl_icon.pack(pady=(80, 10))
         
         
