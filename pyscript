@@ -11,20 +11,23 @@ PIP="$VENV_PY -m pip"
 
 usage() {
   cat <<EOF
-Usage: $0 [setup|freeze|install|start|add|help]
+Usage: $0 [setup|freeze|install|start|add|activate-path|activate-cmd|help]
 
 Commands:
-  setup    Create .venv and activate it (when sourced)
-  freeze   Freeze current env to requirements.txt
-  install  Install dependencies from requirements.txt
-  start    Run the app (python main.py)
-  add      Install package(s) via pip and update requirements.txt
-  help     Show this help
+  setup          Create .venv and activate it (when sourced)
+  freeze         Freeze current env to requirements.txt
+  install        Install dependencies from requirements.txt
+  start          Run the app (python main.py)
+  add            Install package(s) via pip and update requirements.txt
+  activate-path  Print path to .venv/bin/activate
+  activate-cmd   Print 'source .venv/bin/activate' snippet
+  help           Show this help
 
 Activate venv in current shell (must use source):
   source ./pyscript setup          # create + activate
-  # or later:
-  source .venv/bin/activate        # activate manually
+  # or later (two options):
+  source "\$(./pyscript activate-path)"
+  eval "\$(./pyscript activate-cmd)"
 
 Optional alias (add to ~/.bashrc):
   function pys(){ source /mnt/d/Bal/Collage/Project/Wave-MusicPlayer/pyscript "\$@"; }
@@ -34,6 +37,7 @@ Optional alias (add to ~/.bashrc):
 
 Examples:
   ./pyscript setup                 # create .venv (no activation)
+  source "\$(./pyscript activate-path)"
   ./pyscript install
   ./pyscript start
   ./pyscript add requests
@@ -87,6 +91,22 @@ case "$cmd" in
     $PIP install "$@"
     $PIP freeze > requirements.txt
     echo "Installed: $* and updated requirements.txt"
+    ;;
+  activate-path)
+    if [[ -f .venv/bin/activate ]]; then
+      echo ".venv/bin/activate"
+    else
+      echo "Missing .venv. Run: $0 setup" >&2
+      exit 1
+    fi
+    ;;
+  activate-cmd)
+    if [[ -f .venv/bin/activate ]]; then
+      echo "source .venv/bin/activate"
+    else
+      echo "Missing .venv. Run: $0 setup" >&2
+      exit 1
+    fi
     ;;
   help|*)
     usage
