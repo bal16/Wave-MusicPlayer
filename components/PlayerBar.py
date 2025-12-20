@@ -1,5 +1,5 @@
 import customtkinter as ctk
-from config import FONT_SANS_SERIF
+from config import COLOR_BG, FONT_SANS_SERIF, ICON_PLAY_BUTTON
 
 class PlayerBar(ctk.CTkFrame):
     def __init__(self, master, **kwargs):
@@ -32,9 +32,19 @@ class PlayerBar(ctk.CTkFrame):
         self.controls_frame = ctk.CTkFrame(self, fg_color="transparent")
         self.controls_frame.grid(row=0, column=1)
         
+        # Slider Progress Frame
+        self.progress_frame = ctk.CTkFrame(self.controls_frame, fg_color="transparent")
+        self.progress_frame.pack(pady=5)
+        
+        self.lbl_current_time = ctk.CTkLabel(self.progress_frame, text="0:00")
+        self.lbl_current_time.grid(row=0, column=0, pady=5, padx=5)
+        
         # Slider Progress
-        self.slider = ctk.CTkSlider(self.controls_frame, width=400, progress_color="white", button_color="white")
-        self.slider.pack(pady=5)
+        self.slider = ctk.CTkSlider(self.progress_frame, width=400, progress_color="white", button_color="white")
+        self.slider.grid(row=0, column=1, pady=5)
+        
+        self.lbl_total_time = ctk.CTkLabel(self.progress_frame, text="3:45")
+        self.lbl_total_time.grid(row=0, column=2, pady=5, padx=5)
         
         # Buttons (Prev, Play, Next)
         # Use a dedicated row frame to avoid mixing pack/grid
@@ -43,7 +53,7 @@ class PlayerBar(ctk.CTkFrame):
 
         self.btn_prev = ctk.CTkButton(self.buttons_row, text="<<", width=40, fg_color="transparent", border_width=1)
         self.btn_prev.pack(side="left", padx=5)
-        self.btn_play = ctk.CTkButton(self.buttons_row, text="▶", width=40, fg_color="transparent", border_width=1)
+        self.btn_play = ctk.CTkButton(self.buttons_row, text="", width=40, fg_color="transparent", border_width=0, image=ICON_PLAY_BUTTON, hover_color=COLOR_BG )
         self.btn_play.pack(side="left", padx=5)
         self.btn_next = ctk.CTkButton(self.buttons_row, text=">>", width=40, fg_color="transparent", border_width=1)
         self.btn_next.pack(side="left", padx=5)
