@@ -17,11 +17,11 @@ model.py (CounterModel — template mati, tidak dipakai)
 Masalah utama (dengan lokasi):
 
 1. **Konstruktor ber-side-effect:** `controller.py:22` menjalankan `view.mainloop()` di `__init__` → tidak testable.
-2. **Coupling sirkular:** `Sidebar.py:52` memanggil `self.master.controller.add_music_from_folder()` langsung. Batalkan dialog (`""`) → `os.listdir("")` crash. Tambah lagu → UI tidak refresh (tanpa event).
-3. **View salah tanggung jawab (sebagian diperbaiki Fase 0–1):** `init_db()` sudah pindah ke `main.py` (splash hanya visual); `refresh_song_list()` tinggal sebagai shim deprecated ke `show_songs()`; `change_main_content()` masih memakai pola `destroy()` + bikin frame baru (hapus di Fase 4).
-4. **Component mati:** `MainContent` 9 lagu dummy tanpa callback; `PlayerBar` tombol/slider tanpa command + `btn_volume` didefinisikan 2x (baris 70 & 76); belum ada library audio di `pyproject.toml`.
-5. **Config rapuh:** `config.py:12-15` `icons.load()` saat import; `models/database.py:4` path DB relatif CWD + engine global + `check_same_thread=False`.
-6. **Filter sempit:** cuma `.flac`, non-rekursif (`os.listdir`), blocking UI.
+2. **Coupling sirkular (diperbaiki Fase 1–4):** Sidebar memakai callback; dialog batal aman; refresh via event; scan jalan di worker thread + dialog progress.
+3. **View salah tanggung jawab (diperbaiki Fase 0–4):** `init_db()` di `main.py`; `refresh_song_list()` dan `change_main_content()` dihapus; update in-place + EventBus.
+4. **Component mati (diperbaiki Fase 1–3):** `MainContent` data-driven + callback; `PlayerBar` ter-wiring penuh; duplikat `btn_volume` dihapus; `python-vlc` + `miniaudio` di `pyproject.toml`.
+5. **Config rapuh (diperbaiki Fase 0–4):** icon lazy via `utils.icons` (tanpa load saat import); path DB absolut `data/app.db`.
+6. **Filter sempit (diperbaiki Fase 0):** `mp3+flac` rekursif (`os.walk` two-pass); scan non-blocking.
 
 ## 2. Arsitektur target (berlapis, dependency satu arah)
 
@@ -168,8 +168,9 @@ engine = create_engine(abs_db_url)
 repo = SqlSongRepository(engine)
 library = LibraryService(repo, tagger=AudioTagger())
 player = PlayerService(backend=VlcBackend())
+playlists = PlaylistService(playlist_repo)
 view = MainView()                       # tanpa init_db di dalamnya
-controller = MainController(view, library, player)
+controller = MainController(view, library, player, playlists)
 view.bind(on_add_folder=controller.handle_add_folder, ...)
 controller.run()
 ```
@@ -208,4 +209,4 @@ Catatan kompatibilitas (terverifikasi): libvlc 4 menghapus event-manager API, me
 1. ✅ SELESAI — Tambah `domain/`, `infrastructure/song_repository.py`, `services/library_service.py`, `app/container.py`; `mainloop` pindah ke `run()`; `model.py` dihapus. Plus: `views/theme.py` (design system) + `utils/icons.py` (cached loader).
 2. ✅ SELESAI — `init_db` dipanggil di `main.py`; DB path absolut (`data/app.db`, di-`gitignore`); `utils/icons` cached (lazy penuh saat refactor views).
 3. ⚠️ SEBAGIAN — `master.controller` diganti callback (`Sidebar.on_add_folder/on_navigate`, `MainContent.on_select/on_favorite`, `PlayerBar.on_*`); `set_songs()` selesai. `PlayerBar` sudah ter-wiring ke `PlayerService` (Fase 2); playlist overview selesai (Fase 3).
-4. Hapus pola `destroy()`-recreate; ganti dengan update data + EventBus.
+4. ✅ SELESAI — Pola `destroy()`-recreate dihapus (`refresh_song_list`, `change_main_content`); update data in-place + EventBus. Row-level `destroy` di `_clear_rows` adalah daur-ulang normal, dipertahankan.

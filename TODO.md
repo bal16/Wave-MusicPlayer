@@ -16,3 +16,6 @@
 - [x] PLAYLIST FEATURE
   - [x] Create/Rename/Delete Playlist
   - [x] Add/Remove Songs to Playlist
+- [x] POLISH (FASE 4)
+  - [x] Worker-thread scan + progress
+  - [x] Lazy icons, no destroy-recreate

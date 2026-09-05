@@ -36,7 +36,7 @@ Dokumen ini mengunci scope agar List dan Play bisa diselesaikan tanpa redesign d
 - Acceptance:
   - Batalkan dialog tidak crash (bug saat ini: `os.listdir("")`).
   - Support `mp3, flac` (keputusan terkunci — `ogg, m4a, wav` backlog pasca-MVP).
-  - Scan >500 file tidak freeze UI (wajib worker thread + progress).
+  - Scan >500 file tidak freeze UI ✅ selesai Fase 4 (worker thread + dialog progress).
   - Lihat detail implementasi target di [Architecture §4](architecture.md#4-alur-use-case).
 
 ### F2 — List library (SELESAI FASE 1, tanpa search)
@@ -61,7 +61,7 @@ Dokumen ini mengunci scope agar List dan Play bisa diselesaikan tanpa redesign d
 | Aspek         | Target                                                                                       |
 | ------------- | -------------------------------------------------------------------------------------------- |
 | Startup       | Splash → main < 3 dtk (DB `create_all` saja, tanpa scan)                                     |
-| Responsivitas | Scan/parsing di worker thread; UI update via `after()`                                       |
+| Responsivitas | Scan/parsing di worker thread ✅ Fase 4; UI update via `after()`                             |
 | Persistensi   | SQLite file lokal, path absolut (bukan relatif CWD — bug saat ini di `models/database.py:4`) |
 | Logging       | `loguru`, `logs/app_history.log` rotasi 1 MB                                                 |
 | Testability   | Controller tanpa `mainloop()` di `__init__`; service bisa di-unit-test tanpa Tk              |
@@ -76,7 +76,7 @@ Shuffle/repeat gaya versi lama (random ±2 index — buggy), album-art blur back
 2. **Fase 1 — F2 List ✅ SELESAI:** `MainContent.set_songs()`, event `library_changed`, dummy dihapus, Sidebar pindah ke callback. Search box ditunda; render dibatasi 300 baris.
 3. **Fase 2 — F3 Play ✅ SELESAI (smoke 1–8 lolos via miniaudio; VLC menunggu libvlc 3):** `VlcBackend` + `MiniaudioBackend` + `PlayerService` (queue + wrap), wiring `PlayerBar`, ticker `after(1000)`.
 4. **Fase 3 — F4 Playlist ✅ SELESAI:** `PlaylistRepository` + `PlaylistService` + overview/chooser dialog, tombol `+`/`×` per baris, antrean mengikuti view aktif.
-5. **Fase 4 — Polish:** worker-thread scan, lazy icon penuh, hapus `destroy()`-recreate frame. (Path absolut DB sudah selesai di Fase 0.)
+5. **Fase 4 — Polish ✅ SELESAI:** worker-thread scan + dialog progress, lazy icon penuh, `refresh_song_list`/`change_main_content` dihapus. (Path absolut DB sudah selesai di Fase 0.)
 
 ## 7. Open questions — DIPUTUSKAN
 
