@@ -1,6 +1,7 @@
 """LibraryService — F1 (scan) + F2 (list/favorite) logic.
 
-Pure Python: no Tk, no SQLModel. Unit-testable with a fake repo + tagger.
+Pure Python: no Tk, no SQLModel, no TinyTag. All collaborators are
+injected as interfaces; unit-test with a fake repo + tagger.
 """
 
 from __future__ import annotations
@@ -11,19 +12,23 @@ from loguru import logger
 
 from domain.entities import Song, SongDraft
 from domain.interfaces import LIBRARY_CHANGED_EVENT, AudioTagger, EventBus, SongRepository
-from infrastructure.audio_tagger import TinyTagAudioTagger
 
 
 class LibraryService:
     def __init__(
         self,
         repo: SongRepository,
-        tagger: AudioTagger | None = None,
+        tagger: AudioTagger,
         event_bus: EventBus | None = None,
     ):
         self._repo = repo
-        self._tagger: AudioTagger = tagger or TinyTagAudioTagger()
+        self._tagger = tagger
         self._bus = event_bus
+
+    def subscribe(self, listener) -> None:
+        """Subscribe to library_changed events (no-op without an event bus)."""
+        if self._bus is not None:
+            self._bus.subscribe(LIBRARY_CHANGED_EVENT, listener)
 
     def scan_folder(self, folder_path: str) -> int:
         """Recursively scan mp3+flac into the DB. Return the new-song count.
