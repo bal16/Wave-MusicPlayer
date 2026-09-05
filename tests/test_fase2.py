@@ -182,10 +182,12 @@ def test_duration_falls_back_to_song_metadata():
 
 
 def test_probe_reports_subprocess_outcome():
-    from infrastructure.probe import probe_in_subprocess
+    from infrastructure.probe import probe_in_subprocess, run_probe
 
     assert probe_in_subprocess("pass") is True
     assert probe_in_subprocess("raise SystemExit(1)") is False
+    assert run_probe("print('3.0.20')") == (0, "3.0.20")
+    assert run_probe("raise SystemExit(2)")[0] == 2
 
 
 # -- Factory --

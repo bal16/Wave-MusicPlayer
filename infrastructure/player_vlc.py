@@ -19,7 +19,6 @@ import time
 from loguru import logger
 
 from domain.interfaces import BackendUnavailableError, PlayerBackend
-from infrastructure.probe import probe_in_subprocess as _probe_in_subprocess
 
 # Position tolerance (seconds) for natural-end detection on the poll path.
 _END_EPSILON = 1.0
@@ -27,11 +26,13 @@ _POLL_INTERVAL = 0.2
 
 
 def is_available() -> bool:
-    """True when libvlc can instantiate a player on this machine.
+    """True when a compatible libvlc can instantiate a player here.
 
     Probes deeper than Instance() alone: some libvlc builds (notably 4.0
     dev snapshots) create an Instance fine but fail at player creation.
 
+    Only libvlc 3.x is accepted: version 4 changed the media_new ABI, so
+    correct file paths arrive as garbage MRLs (verified in smoke test).
     The probe runs in a subprocess because libvlc mismatches can abort at
     C level (uncatchable in-process) — an abort becomes a non-zero exit.
     """
@@ -39,9 +40,20 @@ def is_available() -> bool:
         import vlc  # noqa: F401 -- fast fail when python-vlc is missing
     except ImportError:
         return False
-    return _probe_in_subprocess(
-        "import vlc; i = vlc.Instance('--no-video'); i.media_player_new(); i.release()"
+    from infrastructure.probe import run_probe
+
+    returncode, version = run_probe(
+        "import vlc;"
+        " print(vlc.libvlc_get_version().decode(), flush=True);"
+        " i = vlc.Instance('--no-video'); i.media_player_new(); i.release()"
     )
+    if returncode != 0:
+        return False
+    major = version.split(".")[0]
+    if major != "3":
+        logger.warning(f"Unsupported libvlc version for python-vlc: {version!r}")
+        return False
+    return True
 
 
 class VlcBackend(PlayerBackend):
