@@ -25,6 +25,17 @@
 | 8   | Klik ♡ di PlayerBar                                | Lagu tampil ♥; list ikut refresh                    |
 | 9   | Tutup app, jalankan `WAVE_AUDIO_BACKEND=miniaudio` | Bunyi via fallback; kasus 1–7 tetap lolos           |
 
+## Hasil (2026-09-05, libvlc 4.0-dev → miniaudio)
+
+- Kasus 1–8: **lolos**. Selama smoke ditemukan & diperbaiki 3 bug fallback:
+  `set_master_volume` tak ada di pyminiaudio 1.71 (→ software gain),
+  generator belum di-prime (→ frame hilang), under-delivery frame per
+  callback terdengar sebagai biip (→ buffer framecount eksak), dan deadlock
+  auto-next dari dalam audio thread (→ callback di thread terpisah).
+- Kasus 9: **VLC tak dapat diuji di mesin ini** — hanya ada libvlc 4.0-dev
+  (so.12), tanpa libvlc 3. Probe menolak 4.x by design; validasi jalur VLC
+  butuh mesin libvlc 3 (kemungkinan mesin demo dosen).
+
 ## Bila gagal
 
 - App abort/crash saat play di backend VLC → cek versi VLC (`vlc --version`).

@@ -9,7 +9,7 @@
 - [x] LIST SONGS FEATURE
   - [x] Get Songs from DB
   - [x] Render Songs to MainContent
-- [x] PLAY SONGS FEATURE (smoke test manual tertunda — docs/smoke-fase2.md)
+- [x] PLAY SONGS FEATURE (smoke 1–8 lolos via miniaudio — docs/smoke-fase2.md)
   - [x] Click Song to Play
   - [x] Get a Song from DB
   - [x] Play a Song
