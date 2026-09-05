@@ -38,6 +38,13 @@ Target folder (migrasi bertahap, UI belakangan — sesuai PRD Fase 0):
 > sebagai shim re-export; `model.py` dihapus. `views/` baru berisi `theme.py` —
 > `main_view/sidebar/song_list/player_bar` dijadwalkan Fase 1–2. Aturan gaya di
 > [Style Guide](style-guide.md).
+>
+> Status Fase 3 ✅: `Playlist` entity + `PlaylistRepository` ABC +
+> `infrastructure/playlist_repository.py` + `services/playlist_service.py`
+> (`playlist_changed` event) sudah ada; `MainController` memegang
+> `current_view` (library/playlists/playlist-detail) dan antrean mengikuti
+> view aktif; `components/PlaylistOverview.py` + `components/dialogs.py`
+> untuk overview/chooser; `MainContent` punya tombol `+`/`×` per baris.
 
 ```txt
 main.py               # bootstrap saja
@@ -168,5 +175,5 @@ Catatan kompatibilitas (terverifikasi): libvlc 4 menghapus event-manager API, me
 
 1. ✅ SELESAI — Tambah `domain/`, `infrastructure/song_repository.py`, `services/library_service.py`, `app/container.py`; `mainloop` pindah ke `run()`; `model.py` dihapus. Plus: `views/theme.py` (design system) + `utils/icons.py` (cached loader).
 2. ✅ SELESAI — `init_db` dipanggil di `main.py`; DB path absolut (`data/app.db`, di-`gitignore`); `utils/icons` cached (lazy penuh saat refactor views).
-3. ⚠️ SEBAGIAN — `master.controller` diganti callback (`Sidebar.on_add_folder`, `MainContent.on_select/on_favorite`); `set_songs()` selesai. `PlayerBar` sudah ter-wiring ke `PlayerService` (Fase 2); tersisa playlist (Fase 3).
+3. ⚠️ SEBAGIAN — `master.controller` diganti callback (`Sidebar.on_add_folder/on_navigate`, `MainContent.on_select/on_favorite`, `PlayerBar.on_*`); `set_songs()` selesai. `PlayerBar` sudah ter-wiring ke `PlayerService` (Fase 2); playlist overview selesai (Fase 3).
 4. Hapus pola `destroy()`-recreate; ganti dengan update data + EventBus.

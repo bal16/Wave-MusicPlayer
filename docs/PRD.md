@@ -50,9 +50,10 @@ Dokumen ini mengunci scope agar List dan Play bisa diselesaikan tanpa redesign d
 - Acceptance: FLAC + MP3 wajib bunyi; seek akurat ±1 dtk; slider jalan 1 detik sekali via `after()`, bukan thread UI. Hasil smoke: kasus 1–8 lolos via miniaudio — lihat [Smoke Fase 2](smoke-fase2.md).
 - Backend: `python-vlc` primer + `miniaudio` fallback — lihat [Architecture §5](architecture.md#5-backend-audio-python-vlc-vs-alternatif). Jalur VLC belum teruji: mesin ini hanya punya libvlc 4.0-dev yang sengaja ditolak probe (ABI `media_new` berubah); butuh mesin libvlc 3 untuk validasi VLC.
 
-### F4 — Playlist & Favorite (OPSIONAL, setelah F2+F3)
+### F4 — Playlist & Favorite (✅ SELESAI FASE 3)
 
-- Buat/rename/hapus playlist, tambah/hapus lagu, persisten di tabel link. Favorite = flag `is_favorite`, bukan tabel.
+- Buat/rename/hapus playlist (dialog), tambah lagu via tombol `+` per baris (+ dialog pilih/buat), hapus lagu dari playlist via tombol `×` (hapus link saja, lagu tetap di library), persisten di tabel link. Favorite = flag `is_favorite`, bukan tabel.
+- Navigasi 🎵/📚 di Sidebar; klik lagu di playlist → antrean = lagu playlist itu (wrap). Urutan lagu = `added_at` (tanpa drag-reorder, sesuai Schema).
 - Lihat model datanya di [Schema §2](schema.md#2-tabel).
 
 ## 4. Non-functional requirements
@@ -74,7 +75,7 @@ Shuffle/repeat gaya versi lama (random ±2 index — buggy), album-art blur back
 1. **Fase 0 — Fondasi ✅ SELESAI:** `SongRepository` + `LibraryService` + `container.py`, `MainController` tipis (`run()` ganti `mainloop` di `__init__`), `model.py` dihapus, `views/theme.py` sebagai design system. UI tidak berubah; `models/` + `controller.py` lama tinggal sebagai shim.
 2. **Fase 1 — F2 List ✅ SELESAI:** `MainContent.set_songs()`, event `library_changed`, dummy dihapus, Sidebar pindah ke callback. Search box ditunda; render dibatasi 300 baris.
 3. **Fase 2 — F3 Play ✅ SELESAI (smoke 1–8 lolos via miniaudio; VLC menunggu libvlc 3):** `VlcBackend` + `MiniaudioBackend` + `PlayerService` (queue + wrap), wiring `PlayerBar`, ticker `after(1000)`.
-4. **Fase 3 — F4 Playlist:** UI playlist + CRUD link table.
+4. **Fase 3 — F4 Playlist ✅ SELESAI:** `PlaylistRepository` + `PlaylistService` + overview/chooser dialog, tombol `+`/`×` per baris, antrean mengikuti view aktif.
 5. **Fase 4 — Polish:** worker-thread scan, lazy icon penuh, hapus `destroy()`-recreate frame. (Path absolut DB sudah selesai di Fase 0.)
 
 ## 7. Open questions — DIPUTUSKAN

@@ -13,3 +13,6 @@
   - [x] Click Song to Play
   - [x] Get a Song from DB
   - [x] Play a Song
+- [x] PLAYLIST FEATURE
+  - [x] Create/Rename/Delete Playlist
+  - [x] Add/Remove Songs to Playlist
