@@ -124,17 +124,26 @@ class MiniaudioBackend(PlayerBackend):
         self._finish_stream(token)
 
     def _finish_stream(self, token: int) -> None:
-        # Runs on miniaudio's thread — never touch widgets here.
+        # Runs on miniaudio's thread — never touch widgets or the device
+        # here: auto-next downstream closes/reopens the device, which
+        # deadlocks when called from inside its own data callback.
         with self._lock:
             if token != self._stream_token or self._end_fired:
                 return
             self._end_fired = True
             self._playing = False
-        if self._end_callback is not None:
-            try:
-                self._end_callback()
-            except Exception as e:
-                logger.error(f"Error in media-end callback: {e}")
+            callback = self._end_callback
+        if callback is not None:
+            thread = threading.Thread(
+                target=self._invoke_end_callback, args=(callback,), daemon=True
+            )
+            thread.start()
+
+    def _invoke_end_callback(self, callback) -> None:
+        try:
+            callback()
+        except Exception as e:
+            logger.error(f"Error in media-end callback: {e}")
 
     def _open_device(self) -> None:
         miniaudio = self._miniaudio
