@@ -1,24 +1,22 @@
 from loguru import logger
 
-from model import CounterModel
+from controller import MainController
+from models.database import engine
 from view import View
-from controller import Controller
 
 
 def main():
-    logger.add(
-        "logs/app_history.log", rotation="1 MB", retention="10 days", level="DEBUG"
-    )
+    logger.add("logs/app_history.log", rotation="1 MB", retention="10 days", level="DEBUG")
 
     logger.info("App Starting...")
 
     try:
-        model = CounterModel()
+        db_engine = engine
         view = View()
-        controller = Controller(model, view)
+        controller = MainController(model=db_engine, view=view)
 
         view.set_controller(controller)
-        view.mainloop()
+
     except Exception as e:
         logger.critical(f"App Crash! Error: {e}")
         raise e
