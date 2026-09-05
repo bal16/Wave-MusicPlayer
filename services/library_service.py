@@ -17,7 +17,13 @@ from collections.abc import Callable
 from loguru import logger
 
 from domain.entities import Song, SongDraft
-from domain.interfaces import LIBRARY_CHANGED_EVENT, AudioTagger, EventBus, SongRepository
+from domain.interfaces import (
+    LIBRARY_CHANGED_EVENT,
+    AudioTagger,
+    CoverArtReader,
+    EventBus,
+    SongRepository,
+)
 
 
 class LibraryService:
@@ -80,6 +86,21 @@ class LibraryService:
 
     def get_song(self, song_id: int) -> Song | None:
         return self._repo.get_by_id(song_id)
+
+    def get_cover(self, song_id: int) -> bytes | None:
+        """Embedded cover bytes for a song, or None.
+
+        Requires the injected tagger to also satisfy CoverArtReader
+        (TinyTagAudioTagger does; pure-metadata taggers return None).
+        """
+        song = self._repo.get_by_id(song_id)
+        if song is None:
+            return None
+        reader: CoverArtReader | None = self._tagger
+        read_cover = getattr(reader, "read_cover", None)
+        if read_cover is None:
+            return None
+        return read_cover(song.file_path)
 
     def toggle_favorite(self, song_id: int) -> bool | None:
         return self._repo.toggle_favorite(song_id)

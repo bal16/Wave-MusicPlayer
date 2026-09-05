@@ -255,6 +255,9 @@ class MainController:
     def handle_get_song(self, song_id: int):
         return self.library.get_song(song_id)
 
+    def handle_get_cover(self, song_id: int) -> bytes | None:
+        return self.library.get_cover(song_id)
+
     # -- Player events (audio threads) --
 
     def _on_track_changed(self, song=None, **_kwargs) -> None:

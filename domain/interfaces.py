@@ -89,6 +89,10 @@ class AudioTagger(Protocol):
     def read(self, path: str) -> SongDraft | None: ...
 
 
+class CoverArtReader(Protocol):
+    def read_cover(self, path: str) -> bytes | None: ...
+
+
 class EventBus:
     """Minimal synchronous bus. Callbacks must not touch widgets directly
     from a worker thread — views must wrap via after(0, ...)."""

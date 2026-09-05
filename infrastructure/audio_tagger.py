@@ -43,3 +43,18 @@ class TinyTagAudioTagger:
             file_path=abs_path,
             duration=float(tag.duration or 0.0),
         )
+
+    def read_cover(self, path: str) -> bytes | None:
+        """Embedded cover bytes, or None. Separate from read() so bulk
+        scans skip the extra image I/O."""
+        from tinytag import TinyTag
+
+        abs_path = normalize_path(path)
+        if not is_supported(abs_path):
+            return None
+        try:
+            image = TinyTag.get(abs_path, image=True).images.any
+        except Exception as e:
+            logger.error(f"Error reading cover {abs_path}: {e}")
+            return None
+        return image.data if image is not None else None
