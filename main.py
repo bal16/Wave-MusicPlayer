@@ -21,6 +21,9 @@ def main():
         container.controller = controller
 
         view.set_controller(controller)
+        controller.bind()
+        # Initial list load once the mainloop is running.
+        view.after(100, controller.refresh_library_view)
         controller.run()
 
     except Exception as e:

@@ -1,6 +1,6 @@
 from __future__ import annotations
 
-from typing import TYPE_CHECKING
+from typing import TYPE_CHECKING, Callable
 
 import customtkinter as ctk
 from customtkinter import filedialog
@@ -18,6 +18,8 @@ class Sidebar(ctk.CTkFrame):
     def __init__(self, master: View, **kwargs):
         super().__init__(master, **kwargs)
         self.master = master
+        # Callback bound by the View (never touch the controller directly).
+        self.on_add_folder: Callable[[str], None] | None = None
         self.logo = ctk.CTkLabel(self, text="", image=ICON_LOGO, text_color=COLOR_ACCENT)
         self.logo.pack(pady=40, padx=20, anchor="w")
 
@@ -43,9 +45,12 @@ class Sidebar(ctk.CTkFrame):
         btn.pack(fill="x", padx=20, pady=10)
 
     def open_add_music_window(self):
-        """Placeholder for Add Music Window logic"""
+        """Ask for a folder, then hand it to the bound callback."""
         dir = filedialog.askdirectory()
         logger.debug(f"Selected directory: {dir}")
 
-        # call controller method
-        self.master.controller.add_music_from_folder(dir)
+        if not dir:
+            logger.debug("Add folder cancelled — nothing to do")
+            return
+        if self.on_add_folder is not None:
+            self.on_add_folder(dir)
