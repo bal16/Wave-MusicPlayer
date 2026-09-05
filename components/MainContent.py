@@ -1,6 +1,7 @@
 from __future__ import annotations
 
-from typing import TYPE_CHECKING, Callable
+from collections.abc import Callable
+from typing import TYPE_CHECKING
 
 import customtkinter as ctk
 
@@ -34,6 +35,8 @@ class MainContent(ctk.CTkFrame):
         # Callbacks bound by the View (never import the controller here).
         self.on_select: Callable[[int], None] | None = None
         self.on_favorite: Callable[[int], None] | None = None
+        self.on_add_to_playlist: Callable[[int], None] | None = None
+        self.on_remove_from_playlist: Callable[[int], None] | None = None
 
         # Header text
         self.lbl_header = ctk.CTkLabel(self, text="All Musics", font=theme.fonts.header)
@@ -66,9 +69,19 @@ class MainContent(ctk.CTkFrame):
         )
 
         self._rows: list[ctk.CTkFrame] = []
+        self._allow_remove = False
 
-    def set_songs(self, songs: list[Song]) -> None:
-        """Replace the rendered rows in place (no frame recreate)."""
+    def set_header(self, title: str) -> None:
+        """Change the header (e.g. playlist name) without recreating."""
+        self.lbl_header.configure(text=title)
+
+    def set_songs(self, songs: list[Song], *, allow_remove: bool = False) -> None:
+        """Replace the rendered rows in place (no frame recreate).
+
+        allow_remove swaps the row "+" (add to playlist) for "×"
+        (remove from the shown playlist).
+        """
+        self._allow_remove = allow_remove
         self._clear_rows()
         visible = songs[:MAX_VISIBLE_ROWS]
 
@@ -121,6 +134,27 @@ class MainContent(ctk.CTkFrame):
         )
         btn_fav.pack(side="right")
 
+        # Playlist action: add ("+") or remove ("×") depending on the view.
+        if self._allow_remove:
+            btn_list = ctk.CTkButton(
+                row,
+                text="×",
+                width=30,
+                fg_color="transparent",
+                text_color=theme.colors.text_muted,
+                command=lambda song_id=song.id: self._emit_remove(song_id),
+            )
+        else:
+            btn_list = ctk.CTkButton(
+                row,
+                text="+",
+                width=30,
+                fg_color="transparent",
+                text_color=theme.colors.text_muted,
+                command=lambda song_id=song.id: self._emit_add_to_playlist(song_id),
+            )
+        btn_list.pack(side="right")
+
         # Row click selects the song (stub for Fase 2 playback).
         row.bind("<Button-1>", lambda _e, song_id=song.id: self._emit_select(song_id))
 
@@ -134,3 +168,11 @@ class MainContent(ctk.CTkFrame):
     def _emit_favorite(self, song_id: int | None) -> None:
         if song_id is not None and self.on_favorite is not None:
             self.on_favorite(song_id)
+
+    def _emit_add_to_playlist(self, song_id: int | None) -> None:
+        if song_id is not None and self.on_add_to_playlist is not None:
+            self.on_add_to_playlist(song_id)
+
+    def _emit_remove(self, song_id: int | None) -> None:
+        if song_id is not None and self.on_remove_from_playlist is not None:
+            self.on_remove_from_playlist(song_id)

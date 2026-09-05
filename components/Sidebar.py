@@ -1,6 +1,7 @@
 from __future__ import annotations
 
-from typing import TYPE_CHECKING, Callable
+from collections.abc import Callable
+from typing import TYPE_CHECKING
 
 import customtkinter as ctk
 from customtkinter import filedialog
@@ -20,17 +21,13 @@ class Sidebar(ctk.CTkFrame):
         self.master = master
         # Callback bound by the View (never touch the controller directly).
         self.on_add_folder: Callable[[str], None] | None = None
+        self.on_navigate: Callable[[str], None] | None = None
         self.logo = ctk.CTkLabel(self, text="", image=ICON_LOGO, text_color=COLOR_ACCENT)
         self.logo.pack(pady=40, padx=20, anchor="w")
 
-        i = 0
-        MENUS = ["➕ Add", "🎵 Music", "📚 Playlist"]
-        for menu in MENUS:
-            if i == 0:
-                self.get_button(menu, command=self.open_add_music_window)
-            else:
-                self.get_button(menu)
-            i += 1
+        self.get_button("➕ Add", command=self.open_add_music_window)
+        self.get_button("🎵 Music", command=lambda: self._emit_navigate("music"))
+        self.get_button("📚 Playlist", command=lambda: self._emit_navigate("playlists"))
 
     def get_button(self, menu_name: str, command=lambda: None) -> ctk.CTkButton:
         btn = ctk.CTkButton(
@@ -44,8 +41,7 @@ class Sidebar(ctk.CTkFrame):
         )
         btn.pack(fill="x", padx=20, pady=10)
 
-    def open_add_music_window(self):
-        """Ask for a folder, then hand it to the bound callback."""
+    def open_add_music_window(self):        """Ask for a folder, then hand it to the bound callback."""
         dir = filedialog.askdirectory()
         logger.debug(f"Selected directory: {dir}")
 
@@ -54,3 +50,7 @@ class Sidebar(ctk.CTkFrame):
             return
         if self.on_add_folder is not None:
             self.on_add_folder(dir)
+
+    def _emit_navigate(self, target: str) -> None:
+        if self.on_navigate is not None:
+            self.on_navigate(target)

@@ -6,15 +6,17 @@ from typing import TYPE_CHECKING
 import customtkinter as ctk
 from loguru import logger
 
+from components.dialogs import ask_text, choose_playlist, confirm
 from components.MainContent import MainContent
 from components.PlayerBar import PlayerBar
+from components.PlaylistOverview import PlaylistOverview
 from components.Sidebar import Sidebar
 from components.SplashScreen import SplashScreen
 
 if TYPE_CHECKING:
     from controller import MainController as Controller
 
-    from domain.entities import Song
+    from domain.entities import Playlist, Song
 
 
 class View(ctk.CTk):
@@ -46,8 +48,15 @@ class View(ctk.CTk):
         """
         self.controller = controller
         self.sidebar.on_add_folder = self._on_add_folder
+        self.sidebar.on_navigate = self._on_navigate
         self.main_area.on_select = self._on_select_song
         self.main_area.on_favorite = self._on_favorite_song
+        self.main_area.on_add_to_playlist = self._on_add_song_to_playlist
+        self.main_area.on_remove_from_playlist = self._on_remove_song_from_playlist
+        self.playlist_view.on_select = controller.handle_select_playlist
+        self.playlist_view.on_create = self._on_create_playlist
+        self.playlist_view.on_rename = self._on_rename_playlist
+        self.playlist_view.on_delete = self._on_delete_playlist
         self.player_bar.on_play = controller.handle_play_pause
         self.player_bar.on_next = controller.handle_next
         self.player_bar.on_prev = controller.handle_prev
@@ -107,9 +116,13 @@ class View(ctk.CTk):
         self.sidebar = Sidebar(self, width=200, corner_radius=0, fg_color="#181818")
         self.sidebar.grid(row=0, column=0, sticky="nsew")
 
-        # --- B. MAIN CONTENT ---
+        # --- B. MAIN CONTENT (songs + playlists share this cell) ---
         self.main_area = MainContent(self, fg_color="#121212", corner_radius=0)
         self.main_area.grid(row=0, column=1, sticky="nsew", padx=0, pady=0)
+
+        self.playlist_view = PlaylistOverview(self, fg_color="#121212", corner_radius=0)
+        self.playlist_view.grid(row=0, column=1, sticky="nsew", padx=0, pady=0)
+        self.playlist_view.grid_remove()  # library list is the default view
 
         # --- C. BOTTOM PLAYER BAR ---
         self.player_bar = PlayerBar(self, height=90, corner_radius=0, fg_color="#0f0f0f")
@@ -125,6 +138,7 @@ class View(ctk.CTk):
         if self.controller is not None:
             self.controller.refresh_library_view()
         else:
+            self.playlist_view.grid_remove()
             self.main_area.destroy()
             self.main_area = MainContent(self, fg_color="#121212", corner_radius=0)
             self.main_area.grid(row=0, column=1, sticky="nsew", padx=0, pady=0)
@@ -132,7 +146,23 @@ class View(ctk.CTk):
 
     def show_songs(self, songs: list[Song]) -> None:
         """Render songs in place (no frame recreate)."""
+        self.playlist_view.grid_remove()
+        self.main_area.grid(row=0, column=1, sticky="nsew", padx=0, pady=0)
+        self.main_area.set_header("All Musics")
         self.main_area.set_songs(songs)
+
+    def show_playlists(self, playlists: list[Playlist]) -> None:
+        """Render the playlist overview in the main cell."""
+        self.main_area.grid_remove()
+        self.playlist_view.grid(row=0, column=1, sticky="nsew", padx=0, pady=0)
+        self.playlist_view.set_playlists(playlists)
+
+    def show_playlist_songs(self, playlist: Playlist, songs: list[Song]) -> None:
+        """Render one playlist's songs with remove affordances."""
+        self.playlist_view.grid_remove()
+        self.main_area.grid(row=0, column=1, sticky="nsew", padx=0, pady=0)
+        self.main_area.set_header(playlist.name)
+        self.main_area.set_songs(songs, allow_remove=True)
 
     def show_track(self, song: Song) -> None:
         """Display the current track in the player bar."""
@@ -170,7 +200,86 @@ class View(ctk.CTk):
     def _on_favorite_song(self, song_id: int) -> None:
         if self.controller is not None:
             self.controller.handle_toggle_favorite(song_id)
-            self.controller.refresh_library_view()
+            self.controller.refresh_current_view()
+
+    def _on_navigate(self, target: str) -> None:
+        if self.controller is None:
+            return
+        if target == "playlists":
+            self.controller.handle_show_playlists()
+        else:
+            self.controller.handle_show_music()
+
+    def _on_create_playlist(self) -> None:
+        if self.controller is None:
+            return
+        name = ask_text("New playlist", "Playlist name:")
+        if name is not None:
+            try:
+                self.controller.handle_create_playlist(name)
+            except ValueError as e:
+                logger.warning(f"Playlist not created: {e}")
+
+    def _on_rename_playlist(self, playlist_id: int) -> None:
+        if self.controller is None:
+            return
+        current = self.controller.handle_get_playlist(playlist_id)
+        name = ask_text(
+            "Rename playlist", "New name:", initial=current.name if current else ""
+        )
+        if name is not None:
+            try:
+                self.controller.handle_rename_playlist(playlist_id, name)
+            except ValueError as e:
+                logger.warning(f"Playlist not renamed: {e}")
+
+    def _on_delete_playlist(self, playlist_id: int) -> None:
+        if self.controller is None:
+            return
+        current = self.controller.handle_get_playlist(playlist_id)
+        label = current.name if current else "this playlist"
+        if confirm(self, "Delete playlist", f"Delete '{label}'? Songs stay in your library."):
+            self.controller.handle_delete_playlist(playlist_id)
+
+    def _on_add_song_to_playlist(self, song_id: int) -> None:
+        if self.controller is None:
+            return
+        song = self.controller.handle_get_song(song_id)
+        playlists = self.controller.handle_list_playlists()
+        if not playlists:
+            name = ask_text("New playlist", "Name for the new playlist:")
+            if name is None:
+                return
+            try:
+                created = self.controller.handle_create_playlist(name)
+            except ValueError as e:
+                logger.warning(f"Playlist not created: {e}")
+                return
+            self.controller.handle_add_to_playlist(created.id, song_id)
+            return
+        choice = choose_playlist(
+            self, playlists, song.title if song else f"song {song_id}"
+        )
+        if choice is None:
+            return
+        if choice == "new":
+            name = ask_text("New playlist", "Name for the new playlist:")
+            if name is None:
+                return
+            try:
+                created = self.controller.handle_create_playlist(name)
+            except ValueError as e:
+                logger.warning(f"Playlist not created: {e}")
+                return
+            self.controller.handle_add_to_playlist(created.id, song_id)
+        else:
+            self.controller.handle_add_to_playlist(choice, song_id)
+
+    def _on_remove_song_from_playlist(self, song_id: int) -> None:
+        if self.controller is not None:
+            current = self.controller.handle_get_current_playlist()
+            if current is not None and current.id is not None:
+                self.controller.handle_remove_from_playlist(current.id, song_id)
 
     def _on_seek_start(self, _event=None) -> None:
         if self.controller is not None:
