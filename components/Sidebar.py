@@ -7,7 +7,7 @@ import customtkinter as ctk
 from customtkinter import filedialog
 from loguru import logger
 
-from config import COLOR_ACCENT, FONT_SANS_SERIF
+from views.theme import theme
 from utils.icons import get_folder, get_logo, get_music, get_playlist
 
 if TYPE_CHECKING:
@@ -23,7 +23,9 @@ class Sidebar(ctk.CTkFrame):
         # Callback bound by the View (never touch the controller directly).
         self.on_add_folder: Callable[[str], None] | None = None
         self.on_navigate: Callable[[str], None] | None = None
-        self.logo = ctk.CTkLabel(self, text="", image=get_logo(), text_color=COLOR_ACCENT)
+        self.logo = ctk.CTkLabel(
+            self, text="", image=get_logo(), text_color=theme.colors.accent
+        )
         self.logo.pack(pady=40, padx=20, anchor="w")
 
         self.get_button("Add", command=self.open_add_music_window, image=get_folder())
@@ -41,7 +43,7 @@ class Sidebar(ctk.CTkFrame):
             image=image,
             fg_color="transparent",
             anchor="w",
-            font=(FONT_SANS_SERIF, 16),
+            font=theme.fonts.menu,
             hover_color="#333333",
             command=command,
         )

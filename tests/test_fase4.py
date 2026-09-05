@@ -161,9 +161,11 @@ def test_background_scan_failure_surfaces(tmp_path):
 # -- Lazy icons --
 
 
-def test_config_import_loads_no_images():
-    import config
+def test_icon_loading_is_lazy_and_cached():
+    import utils.icons as icons
 
-    assert not hasattr(config, "ICON_LOGO")
-    assert config.COLOR_ACCENT == "#2ccae6"
-    assert config.FONT_SANS_SERIF == "Arial"
+    first = icons.load_icon.cache_info()
+    icons.load_icon("play", 32, 33)
+    icons.load_icon("play", 32, 33)
+    second = icons.load_icon.cache_info()
+    assert second.hits > first.hits  # second identical load served from cache

@@ -1,6 +1,6 @@
 import customtkinter as ctk
 
-from config import COLOR_ACCENT, COLOR_BG
+from views.theme import theme
 from utils.icons import get_logo_box
 
 
@@ -12,7 +12,7 @@ class SplashScreen(ctk.CTkToplevel):
 
         width = 500
         height = 300
-        self.config(background=COLOR_BG)
+        self.config(background=theme.colors.surface)
         self.attributes("-topmost", True)
 
         screen_width = self.winfo_screenwidth()
@@ -28,7 +28,7 @@ class SplashScreen(ctk.CTkToplevel):
         self.lbl_icon.pack(pady=(80, 10))
 
         self.progress = ctk.CTkProgressBar(
-            self.logo_frame, width=200, height=4, progress_color=COLOR_ACCENT
+            self.logo_frame, width=200, height=4, progress_color=theme.colors.accent
         )
         self.progress.pack(pady=30)
         self.progress.set(0)
