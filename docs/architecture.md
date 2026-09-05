@@ -18,7 +18,7 @@ Masalah utama (dengan lokasi):
 
 1. **Konstruktor ber-side-effect:** `controller.py:22` menjalankan `view.mainloop()` di `__init__` → tidak testable.
 2. **Coupling sirkular:** `Sidebar.py:52` memanggil `self.master.controller.add_music_from_folder()` langsung. Batalkan dialog (`""`) → `os.listdir("")` crash. Tambah lagu → UI tidak refresh (tanpa event).
-3. **View salah tanggung jawab:** `view.py:44-58` menjalankan `init_db()` + `time.sleep(0.5)` di UI thread; `refresh_song_list()` / `change_main_content()` memakai pola `destroy()` + bikin frame baru.
+3. **View salah tanggung jawab (sebagian diperbaiki Fase 0–1):** `init_db()` sudah pindah ke `main.py` (splash hanya visual); `refresh_song_list()` tinggal sebagai shim deprecated ke `show_songs()`; `change_main_content()` masih memakai pola `destroy()` + bikin frame baru (hapus di Fase 4).
 4. **Component mati:** `MainContent` 9 lagu dummy tanpa callback; `PlayerBar` tombol/slider tanpa command + `btn_volume` didefinisikan 2x (baris 70 & 76); belum ada library audio di `pyproject.toml`.
 5. **Config rapuh:** `config.py:12-15` `icons.load()` saat import; `models/database.py:4` path DB relatif CWD + engine global + `check_same_thread=False`.
 6. **Filter sempit:** cuma `.flac`, non-rekursif (`os.listdir`), blocking UI.
@@ -166,5 +166,5 @@ Rekomendasi konkret:
 
 1. ✅ SELESAI — Tambah `domain/`, `infrastructure/song_repository.py`, `services/library_service.py`, `app/container.py`; `mainloop` pindah ke `run()`; `model.py` dihapus. Plus: `views/theme.py` (design system) + `utils/icons.py` (cached loader).
 2. ✅ SELESAI — `init_db` dipanggil di `main.py`; DB path absolut (`data/app.db`, di-`gitignore`); `utils/icons` cached (lazy penuh saat refactor views).
-3. Baru sentuh `views/`: ganti `master.controller` dengan callback; `SongList.set_songs()`; `PlayerBar` wiring ke `PlayerService`.
+3. ⚠️ SEBAGIAN — `master.controller` diganti callback (`Sidebar.on_add_folder`, `MainContent.on_select/on_favorite`); `set_songs()` selesai. Tersisa untuk Fase 2: `PlayerBar` wiring ke `PlayerService`.
 4. Hapus pola `destroy()`-recreate; ganti dengan update data + EventBus.
