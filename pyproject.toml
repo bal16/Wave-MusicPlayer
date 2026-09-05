@@ -1,8 +1,8 @@
 [project]
 name = "wave-musicplayer"
 version = "0.1.0"
-description = "Wave Music Player — local music player (CustomTkinter + SQLModel)"
-readme = "TODO.md"
+description = "Wave Music Player — local music player"
+readme = "README.md"
 requires-python = ">=3.11"
 dependencies = [
     "customtkinter>=6.0.0",
