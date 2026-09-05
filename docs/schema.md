@@ -52,7 +52,7 @@ erDiagram
 | Kolom         | Tipe     | Constraint              | Keterangan                   |
 | ------------- | -------- | ----------------------- | ---------------------------- |
 | `id`          | INTEGER  | PK autoincrement        | —                            |
-| `name`        | TEXT     | NOT NULL                | PRD F4 ✅ selesai Fase 3 |
+| `name`        | TEXT     | NOT NULL                | PRD F4 ✅ selesai Fase 3     |
 | `description` | TEXT     | NULL                    | —                            |
 | `created_at`  | DATETIME | NOT NULL, default `now` | UTC saat refactor            |
 

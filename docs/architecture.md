@@ -178,7 +178,7 @@ controller.run()
 
 - **Add (PRD F1):** `Sidebar --on_add_folder--> Controller.handle_add_folder --scan (thread)--> LibraryService --publish library_changed--> EventBus --show_songs--> SongList`. Menggantikan `destroy()`-recreate.
 - **List (PRD F2):** `Controller.handle_show_music --list_songs--> LibraryService --list_all--> Repo --> SongList.set_songs()`. Sumber kebenaran = tabel `song` di [Schema §2](schema.md#2-tabel).
-- **Play (PRD F3):** `SongList --on_select(id)--> Controller --songs sesuai view aktif--> Service (`library.list_songs` atau `playlists.songs_in_playlist`) `--play_queue--> PlayerService --load/play--> PlayerBackend --set_track/set_progress--> PlayerBar`. Posisi slider via `after(1000)`, event `media_end` → auto-next dengan wrap ke lagu pertama.
+- **Play (PRD F3):** `SongList --on_select(id)--> Controller --songs--> Service --play_queue--> PlayerService --load/play--> PlayerBackend --set_track/set_progress--> PlayerBar`. Songs = `library.list_songs` atau `playlists.songs_in_playlist` sesuai view aktif. Posisi slider via `after(1000)`, event `media_end` → auto-next dengan wrap ke lagu pertama.
 
 Aturan threading: TinyTag + VLC callback **tidak boleh** menyentuh widget langsung; selalu lewat `view.after(0, ...)` atau EventBus.
 
