@@ -72,27 +72,55 @@ class MiniaudioBackend(PlayerBackend):
         return int(self._duration * _SAMPLE_RATE)
 
     def _counting_stream(self, seek_frame: int, token: int):
-        """Yield decoded chunks while counting frames for position/end.
+        """Yield exactly the frames the device requests per callback.
+
+        The device sends the needed frame count and expects that many
+        frames back; short-delivering pads the period with silence, which
+        sounds like periodic beeping. A buffer accumulates decoder output
+        (fixed 4096-frame reads) and slices exact servings. Position counts
+        delivered frames, so it tracks heard audio.
 
         Volume is applied here as software gain: pyminiaudio's device
         classes offer no stable volume API across versions, while the
         SIGNED16 samples are always ours to scale.
         """
+        import array
+
         miniaudio = self._miniaudio
         stream = miniaudio.stream_file(
             self._file_path,
             output_format=miniaudio.SampleFormat.SIGNED16,
             nchannels=_CHANNELS,
             sample_rate=_SAMPLE_RATE,
+            frames_to_read=4096,
             seek_frame=seek_frame,
         )
-        for chunk in stream:
+        buf = array.array("h")
+        exhausted = False
+        need = yield array.array("h")  # prime the generator for device.start()
+        while True:
             with self._lock:
                 if token != self._stream_token:
                     return  # superseded by a newer stream
-                self._frames_played += len(chunk) // _CHANNELS
+            if not need:
+                need = yield array.array("h")
+                continue
+            while not exhausted and len(buf) // _CHANNELS < need:
+                try:
+                    buf.extend(next(stream))
+                except StopIteration:
+                    exhausted = True
+            take = min(need, len(buf) // _CHANNELS)
+            if take == 0:  # stream exhausted and buffer drained
+                break
+            out = array.array("h", buf[: take * _CHANNELS])
+            del buf[: take * _CHANNELS]
+            with self._lock:
+                if token != self._stream_token:
+                    return
+                self._frames_played += take
                 gain = self._volume
-            yield chunk if gain >= 1.0 else _apply_gain(chunk, gain)
+            need = yield out if gain >= 1.0 else _apply_gain(out, gain)
         self._finish_stream(token)
 
     def _finish_stream(self, token: int) -> None:
@@ -131,14 +159,11 @@ class MiniaudioBackend(PlayerBackend):
         self._open_device()
         stream = self._counting_stream(seek_frame, self._stream_token)
         # Prime the generator: the device sends into it immediately, which
-        # raises on a just-started generator. The primed chunk is never
-        # heard, so subtract it back from the position count.
-        first = next(stream, None)
-        if first is None:
+        # raises on a just-started generator. The primed yield is empty, so
+        # no position compensation is needed.
+        if next(stream, None) is None:
             self._finish_stream(self._stream_token)
             return
-        with self._lock:
-            self._frames_played -= len(first) // _CHANNELS
         self._device.start(stream)
 
     # -- PlayerBackend --
