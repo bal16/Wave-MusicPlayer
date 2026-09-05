@@ -6,24 +6,26 @@ The UI is a dark CustomTkinter window: a sidebar for navigation, a song list in 
 
 ## Status
 
-Honest snapshot — this is a rewrite in progress:
+All MVP phases are done and covered by 75 tests plus a manual smoke checklist:
 
-- [x] Add folder → scans `.flac` files, reads tags, stores them in `database.db` (skips duplicates)
-- [ ] List library → the song list still shows placeholder rows, real DB rendering is next
-- [ ] Playback → the player bar is UI only; no audio backend is wired yet
+- [x] Add folder → recursive `.mp3`/`.flac` scan on a worker thread with a progress dialog, tags stored in `data/app.db` (skips duplicates by path)
+- [x] List library → rendered from the DB, auto-refreshes on change, favorite toggle, search deferred
+- [x] Playback → VLC primary with miniaudio fallback (auto-detected, overridable via `WAVE_AUDIO_BACKEND`); full-library queue with wrap-around; seek, volume, mute; embedded cover art with bundled fallback
+- [x] Playlist → create/rename/delete, add songs from any row, remove without touching the library; playback queues the open view
+- [x] Polish → threaded scan, lazy icons, no destroy-recreate refreshes, close always terminates
 
-See `TODO.md` for the checklist and `docs/PRD.md` for the full plan.
+Playback smoke cases 1–8 pass via the miniaudio fallback; the VLC path needs a libvlc 3 machine and is still unverified. See `docs/TODO.md` for the checklist and `docs/` for the full plan.
 
 ## Run it
 
-You need Python 3.11+ and a display (this is a desktop GUI, it won't start over plain SSH).
+You need Python 3.11+ and a display (this is a desktop GUI, it won't start over plain SSH). No system audio dependency for the fallback path; the VLC backend needs a VLC install.
 
 ```bash
 uv sync          # create .venv and install everything from uv.lock
 uv run poe dev   # start the app with debug logging
 ```
 
-`uv run poe start` runs it with default logging.
+`uv run poe start` runs it with default logging. Force an audio backend with `WAVE_AUDIO_BACKEND=vlc|miniaudio`.
 
 ## Common tasks
 
@@ -34,9 +36,9 @@ All tasks live in `pyproject.toml` (`[tool.poe.tasks]`), run them with `uv run p
 | `start`        | Run the app                                               |
 | `dev`          | Run the app with debug logging                            |
 | `check`        | Byte-compile all modules (works headless)                 |
-| `lint`         | `ruff check` on new/tooling files                         |
-| `format`       | `ruff format` on new/tooling files                        |
-| `format-check` | Fail if those files aren't formatted                      |
+| `lint`         | `ruff check` on the whole repo                            |
+| `format`       | `ruff format` on the whole repo                           |
+| `format-check` | Fail if any file isn't formatted                          |
 | `test`         | `pytest`                                                  |
 | `quality`      | `check` → `lint` → `format-check` → `test`                |
 | `build`        | Onedir bundle into `dist/Wave/` via `wave.spec`           |
@@ -48,19 +50,22 @@ Add a dependency with `uv add <package>` (runtime) or `uv add --group dev <packa
 ## Layout
 
 ```txt
-main.py               # entry point: logging setup, creates View + Controller
+main.py               # entry point: logging, DB init, container wiring
 view.py               # CTk root window, splash screen, layout grid
-controller.py         # folder scan + TinyTag parsing + DB writes
-config.py             # colors, fonts, icon handles
-models/               # SQLModel tables (Song, Playlist) + engine
-components/           # Sidebar, MainContent, PlayerBar, SplashScreen
-utils/                # IconManager (bundle-aware asset paths)
-tests/                # pytest suite (schema + icon paths; GUI is manual)
-docs/                 # PRD, architecture, DB schema
-__old/                # legacy Tkinter/pygame version, kept for reference
+app/container.py      # composition root: engine → repo → service → controller
+controllers/          # thin MainController: handlers, view routing, tickers
+domain/               # Song/Playlist entities + repository/backend ABCs
+infrastructure/       # SQLModel, TinyTag tagger, VLC/miniaudio backends
+services/             # library, player (queue + auto-next), playlist logic
+components/           # Sidebar, MainContent, PlayerBar, PlaylistOverview, dialogs
+views/theme.py        # design tokens (colors, fonts, spacing)
+utils/icons.py        # cached, lazy icon loader (assets/icons)
+tests/                # pytest suite, GUI-free; manual smoke in docs/smoke-fase2.md
+docs/                 # PRD, architecture, DB schema, style guide, smoke list, TODO
+__old/                # legacy Tkinter/pygame OOP project, kept for reference (see __old/README.md)
 ```
 
-`docs/` has three cross-linked files: `PRD.md` (scope and roadmap), `architecture.md` (current vs target design, audio backend decision), `schema.md` (tables and query rules).
+`docs/` holds six cross-linked files: `PRD.md` (scope and roadmap), `architecture.md` (layered design, audio backend decision), `schema.md` (tables and query rules), `style-guide.md` (design tokens and UI rules), `smoke-fase2.md` (manual playback checklist), `TODO.md` (feature checklist).
 
 ## Build a binary
 
@@ -69,9 +74,9 @@ uv run poe build   # dist/Wave/ folder bundle, faster to debug
 uv run poe dist    # single dist/Wave executable, for handing to someone
 ```
 
-Icons are bundled from `assets/icons`; the database and logs stay outside the bundle next to where you run it.
+Icons are bundled from `assets/icons`; the database (`data/app.db`) and logs stay outside the bundle next to where you run it.
 
 ## Notes
 
-- `database.db` and `logs/` are local state, git-ignored by design.
-- Lint/format scope is deliberately narrow (`tests/`, `utils/icon_manager.py`) until the in-progress UI files stabilize — see the tooling commit for context.
+- `data/` and `logs/` are local state, git-ignored by design.
+- One ruff scope for the editor and the gate (`ruff check .` / `ruff format .`, config in `pyproject.toml`); `.vscode/settings.json` points the editor at the project's own ruff, `.markdownlint.yaml` covers docs.
