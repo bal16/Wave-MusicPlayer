@@ -57,3 +57,7 @@ def get_folder():
 
 def get_music():
     return load_icon("music", 20, 20)
+
+
+def get_playlist():
+    return load_icon("playlist", 20, 20)

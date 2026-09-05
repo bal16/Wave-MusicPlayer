@@ -8,7 +8,7 @@ from customtkinter import filedialog
 from loguru import logger
 
 from config import COLOR_ACCENT, FONT_SANS_SERIF
-from utils.icons import get_folder, get_logo, get_music
+from utils.icons import get_folder, get_logo, get_music, get_playlist
 
 if TYPE_CHECKING:
     from view import View
@@ -26,9 +26,13 @@ class Sidebar(ctk.CTkFrame):
         self.logo = ctk.CTkLabel(self, text="", image=get_logo(), text_color=COLOR_ACCENT)
         self.logo.pack(pady=40, padx=20, anchor="w")
 
-        self.get_button("➕ Add", command=self.open_add_music_window, image=get_folder())
-        self.get_button("🎵 Music", command=lambda: self._emit_navigate("music"), image=get_music())
-        self.get_button("📚 Playlist", command=lambda: self._emit_navigate("playlists"))
+        self.get_button("Add", command=self.open_add_music_window, image=get_folder())
+        self.get_button("Music", command=lambda: self._emit_navigate("music"), image=get_music())
+        self.get_button(
+            "Playlist",
+            command=lambda: self._emit_navigate("playlists"),
+            image=get_playlist(),
+        )
 
     def get_button(self, menu_name: str, command=lambda: None, image=None) -> ctk.CTkButton:
         btn = ctk.CTkButton(
