@@ -10,10 +10,11 @@ from components.MainContent import MainContent
 from components.PlayerBar import PlayerBar
 from components.Sidebar import Sidebar
 from components.SplashScreen import SplashScreen
-from models.database import init_db
 
 if TYPE_CHECKING:
     from controller import MainController as Controller
+
+    from domain.entities import Song
 
 
 class View(ctk.CTk):
@@ -36,25 +37,29 @@ class View(ctk.CTk):
         logger.info("View initialized")
 
     def set_controller(self, controller: Controller):
-        """Accept object controller from outside"""
+        """Accept object controller from outside, then bind view callbacks.
+
+        Binding happens here (not in setup_ui) because the controller
+        only exists after the View is fully constructed.
+        """
         self.controller = controller
-        logger.debug("Controller set")
+        self.sidebar.on_add_folder = self._on_add_folder
+        self.main_area.on_select = self._on_select_song
+        self.main_area.on_favorite = self._on_favorite_song
+        logger.debug("Controller set and callbacks bound")
 
     def run_loading(self):
+        # Visual splash only. DB setup lives in main(), not here.
         self.update_splash_progress(0.1)
         self.update()
 
-        try:
-            init_db()
-            self.update_splash_progress(0.5)
-            time.sleep(0.5)
+        time.sleep(0.5)
+        self.update_splash_progress(0.5)
 
-            self.update_splash_progress(1.0)
+        time.sleep(0.5)
+        self.update_splash_progress(1.0)
 
-            self.finish_loading()
-
-        except Exception as e:
-            logger.error(f"Error initializing DB: {e}")
+        self.finish_loading()
 
     def finish_loading(self):
         if hasattr(self, "splash"):
@@ -100,11 +105,40 @@ class View(ctk.CTk):
 
     ## METHOD FOR DESTROY self.main_area WHEN REFRESH IS NEEDED
     def refresh_song_list(self):
-        """Refresh the song list in MainContent"""
-        self.main_area.destroy()
-        self.main_area = MainContent(self, fg_color="#121212", corner_radius=0)
-        self.main_area.grid(row=0, column=1, sticky="nsew", padx=0, pady=0)
-        logger.debug("MainContent refreshed")
+        """Deprecated: prefer show_songs() in-place updates.
+
+        Kept for one phase so external callers keep working.
+        """
+        logger.warning("refresh_song_list() is deprecated, use show_songs()")
+        if self.controller is not None:
+            self.controller.refresh_library_view()
+        else:
+            self.main_area.destroy()
+            self.main_area = MainContent(self, fg_color="#121212", corner_radius=0)
+            self.main_area.grid(row=0, column=1, sticky="nsew", padx=0, pady=0)
+            logger.debug("MainContent refreshed")
+
+    def show_songs(self, songs: list[Song]) -> None:
+        """Render songs in place (no frame recreate)."""
+        self.main_area.set_songs(songs)
+
+    # -- Callbacks bound to the controller in set_controller() --
+
+    def _on_add_folder(self, folder_path: str) -> None:
+        if self.controller is None:
+            return
+        # List refresh arrives via the library_changed event when new
+        # songs are added; nothing to do here when the count is zero.
+        self.controller.handle_add_folder(folder_path)
+
+    def _on_select_song(self, song_id: int) -> None:
+        if self.controller is not None:
+            self.controller.handle_select_song(song_id)
+
+    def _on_favorite_song(self, song_id: int) -> None:
+        if self.controller is not None:
+            self.controller.handle_toggle_favorite(song_id)
+            self.controller.refresh_library_view()
 
     # METHOD FOR DESTROY self.main_area WHEN CHANGE VIEW (Music / Playlist / MusicPlaylist)
     def change_main_content(self, new_content: ctk.CTkFrame):

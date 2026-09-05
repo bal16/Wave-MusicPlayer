@@ -1,9 +1,9 @@
 """Legacy controller path — thin compat shim over the new controller.
 
-Phase 0 keeps Sidebar calling master.controller.add_music_from_folder(),
-so this wrapper preserves that method name and the old
-MainController(model=engine, view=view) signature while delegating all
-logic to LibraryService. No mainloop() in __init__ — call run().
+Views talk to the controller through callbacks bound in View.set_controller()
+(Sidebar.on_add_folder, MainContent.on_select/on_favorite). This wrapper
+preserves the old MainController(model=engine, view=view) signature while
+delegating all logic to LibraryService. No mainloop() in __init__ — call run().
 """
 
 from __future__ import annotations
