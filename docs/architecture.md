@@ -2,9 +2,9 @@
 
 > Cross-reference: [PRD](PRD.md) · [Schema](schema.md)
 
-## 1. Arsitektur saat ini (hasil audit)
+## 1. Arsitektur saat ini (hasil audit awal — semua item di bawah sudah diperbaiki)
 
-Niatnya MVC, praktiknya **View-heavy + Fat Controller + Model ganda**:
+Niatnya MVC, praktiknya **View-heavy + Fat Controller + Model ganda** (kondisi saat audit, pre-Fase 0):
 
 ```txt
 main.py → View(ctk.CTk) ──creates──▶ Sidebar / MainContent / PlayerBar / SplashScreen
@@ -208,5 +208,5 @@ Catatan kompatibilitas (terverifikasi): libvlc 4 menghapus event-manager API, me
 
 1. ✅ SELESAI — Tambah `domain/`, `infrastructure/song_repository.py`, `services/library_service.py`, `app/container.py`; `mainloop` pindah ke `run()`; `model.py` dihapus. Plus: `views/theme.py` (design system) + `utils/icons.py` (cached loader).
 2. ✅ SELESAI — `init_db` dipanggil di `main.py`; DB path absolut (`data/app.db`, di-`gitignore`); `utils/icons` cached (lazy penuh saat refactor views).
-3. ⚠️ SEBAGIAN — `master.controller` diganti callback (`Sidebar.on_add_folder/on_navigate`, `MainContent.on_select/on_favorite`, `PlayerBar.on_*`); `set_songs()` selesai. `PlayerBar` sudah ter-wiring ke `PlayerService` (Fase 2); playlist overview selesai (Fase 3).
+3. ✅ SELESAI — `master.controller` diganti callback (`Sidebar.on_add_folder/on_navigate`, `MainContent.on_select/on_favorite`, `PlayerBar.on_*`); `set_songs()` selesai. `PlayerBar` ter-wiring ke `PlayerService` (Fase 2); playlist overview selesai (Fase 3). Shim terakhir pensiun: `controller.py`, `models/`, `config.py` dihapus.
 4. ✅ SELESAI — Pola `destroy()`-recreate dihapus (`refresh_song_list`, `change_main_content`); update data in-place + EventBus. Row-level `destroy` di `_clear_rows` adalah daur-ulang normal, dipertahankan.
