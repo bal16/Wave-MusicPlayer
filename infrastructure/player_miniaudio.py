@@ -17,6 +17,17 @@ from infrastructure.probe import probe_in_subprocess as _probe_in_subprocess
 _CHANNELS = 2
 _SAMPLE_RATE = 44100
 
+_S16_MIN = -32768
+_S16_MAX = 32767
+
+
+def _apply_gain(chunk, gain: float):
+    """Scale SIGNED16 samples in place, clamped to int16 range."""
+    for i, sample in enumerate(chunk):
+        scaled = int(sample * gain)
+        chunk[i] = _S16_MIN if scaled < _S16_MIN else _S16_MAX if scaled > _S16_MAX else scaled
+    return chunk
+
 
 def is_available() -> bool:
     """True when a miniaudio playback device can be opened here.
@@ -61,7 +72,12 @@ class MiniaudioBackend(PlayerBackend):
         return int(self._duration * _SAMPLE_RATE)
 
     def _counting_stream(self, seek_frame: int, token: int):
-        """Yield decoded chunks while counting frames for position/end."""
+        """Yield decoded chunks while counting frames for position/end.
+
+        Volume is applied here as software gain: pyminiaudio's device
+        classes offer no stable volume API across versions, while the
+        SIGNED16 samples are always ours to scale.
+        """
         miniaudio = self._miniaudio
         stream = miniaudio.stream_file(
             self._file_path,
@@ -75,7 +91,8 @@ class MiniaudioBackend(PlayerBackend):
                 if token != self._stream_token:
                     return  # superseded by a newer stream
                 self._frames_played += len(chunk) // _CHANNELS
-            yield chunk
+                gain = self._volume
+            yield chunk if gain >= 1.0 else _apply_gain(chunk, gain)
         self._finish_stream(token)
 
     def _finish_stream(self, token: int) -> None:
@@ -99,7 +116,6 @@ class MiniaudioBackend(PlayerBackend):
             nchannels=_CHANNELS,
             sample_rate=_SAMPLE_RATE,
         )
-        self._device.set_master_volume(max(0.0, min(1.0, self._volume)))
 
     def _close_device(self) -> None:
         if self._device is not None:
@@ -113,7 +129,17 @@ class MiniaudioBackend(PlayerBackend):
         self._stream_token = getattr(self, "_stream_token", 0) + 1
         self._end_fired = False
         self._open_device()
-        self._device.start(self._counting_stream(seek_frame, self._stream_token))
+        stream = self._counting_stream(seek_frame, self._stream_token)
+        # Prime the generator: the device sends into it immediately, which
+        # raises on a just-started generator. The primed chunk is never
+        # heard, so subtract it back from the position count.
+        first = next(stream, None)
+        if first is None:
+            self._finish_stream(self._stream_token)
+            return
+        with self._lock:
+            self._frames_played -= len(first) // _CHANNELS
+        self._device.start(stream)
 
     # -- PlayerBackend --
 
@@ -164,12 +190,9 @@ class MiniaudioBackend(PlayerBackend):
             self._start_stream(target)
 
     def set_volume(self, level: float) -> None:
-        clamped = max(0.0, min(1.0, level))
+        # Stored gain applied per chunk in _counting_stream (no device call).
         with self._lock:
-            self._volume = clamped
-            device = self._device
-        if device is not None:
-            device.set_master_volume(clamped)
+            self._volume = max(0.0, min(1.0, level))
 
     def get_pos(self) -> float:
         with self._lock:
