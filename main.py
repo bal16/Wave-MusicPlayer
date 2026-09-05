@@ -1,7 +1,7 @@
 from loguru import logger
 
 from app.container import build_container
-from controller import MainController
+from controllers.main_controller import MainController
 from infrastructure.db import init_db
 from view import View
 

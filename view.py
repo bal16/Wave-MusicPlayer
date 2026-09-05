@@ -14,7 +14,7 @@ from components.Sidebar import Sidebar
 from components.SplashScreen import SplashScreen
 
 if TYPE_CHECKING:
-    from controller import MainController as Controller
+    from controllers.main_controller import MainController as Controller
 
     from domain.entities import Playlist, Song
 
