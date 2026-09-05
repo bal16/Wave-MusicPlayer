@@ -180,6 +180,9 @@ class PlayerBar(ctk.CTkFrame):
         self.volume_slider.set(1)
         self.volume_slider.grid(row=0, column=2, pady=20, padx=0)
 
+        # Initial art: bundled fallback until the first track plays.
+        self.set_cover(None, None)
+
     # -- Display API called by the View --
 
     def set_track(self, song: Song) -> None:
