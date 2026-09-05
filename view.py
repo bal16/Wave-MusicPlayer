@@ -153,6 +153,13 @@ class View(ctk.CTk):
         """Display the current track in the player bar."""
         self.player_bar.set_track(song)
         self.player_bar.set_playing(True)
+        cover = None
+        if self.controller is not None and song.id is not None:
+            try:
+                cover = self.controller.handle_get_cover(song.id)
+            except Exception as e:
+                logger.warning(f"Cover load failed for song {song.id}: {e}")
+        self.player_bar.set_cover(song.id, cover)
 
     def set_progress(self, seconds: float, total: float) -> None:
         self.player_bar.set_progress(seconds, total)

@@ -33,3 +33,7 @@ def get_play_button():
 
 def get_pause_button():
     return load_icon("pause", 32, 32)
+
+
+def get_now_playing(size: int = 60):
+    return load_icon("now_playing", size, size)

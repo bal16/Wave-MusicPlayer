@@ -5,7 +5,7 @@ from typing import TYPE_CHECKING
 
 import customtkinter as ctk
 
-from utils.icons import get_pause_button, get_play_button
+from utils.icons import get_now_playing, get_pause_button, get_play_button
 from views.theme import format_duration, theme
 
 if TYPE_CHECKING:
@@ -28,6 +28,8 @@ class PlayerBar(ctk.CTkFrame):
         # Total duration of the current track (for slider mapping).
         self._total = 0.0
         self._dragging = False
+        # Decoded covers by song id (thumbnail CTkImages).
+        self._cover_cache: dict[int, ctk.CTkImage] = {}
 
         # Top-level grid: fixed sides, fluid center.
         self.grid_columnconfigure(0, weight=0)
@@ -206,6 +208,40 @@ class PlayerBar(ctk.CTkFrame):
 
     def set_favorite(self, is_favorite: bool) -> None:
         self.like_button.configure(text="♥" if is_favorite else "♡")
+
+    def set_cover(self, song_id: int | None, data: bytes | None) -> None:
+        """Show embedded cover art, bundled fallback, or text placeholder.
+
+        Embedded bytes are thumbnailed and cached per song id; without
+        bytes the bundled now_playing asset is used. Plain text remains
+        only if the asset itself fails to load.
+        """
+        if data is not None and song_id is not None:
+            image = self._cover_cache.get(song_id)
+            if image is None:
+                image = self._decode_cover(data)
+                if image is not None:
+                    self._cover_cache[song_id] = image
+            if image is not None:
+                self.lbl_art.configure(image=image, text="")
+                return
+        try:
+            self.lbl_art.configure(image=get_now_playing(), text="")
+        except Exception:
+            self.lbl_art.configure(image=None, text="[IMG]")
+
+    @staticmethod
+    def _decode_cover(data: bytes) -> ctk.CTkImage | None:
+        import io
+
+        from PIL import Image
+
+        try:
+            picture = Image.open(io.BytesIO(data)).convert("RGB")
+            picture.thumbnail((120, 120))
+            return ctk.CTkImage(light_image=picture, dark_image=picture, size=(60, 60))
+        except Exception:
+            return None
 
     # -- Slider interaction --
 
