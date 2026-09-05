@@ -105,7 +105,12 @@ def test_thin_controller_has_no_mainloop_side_effect(tmp_path):
             self.looped = True
 
     view = FakeView()
-    controller = MainController(view=view, library=container.library, player=container.player)
+    controller = MainController(
+        view=view,
+        library=container.library,
+        player=container.player,
+        playlists=container.playlists,
+    )
     assert view.looped is False  # __init__ must not enter the loop
     controller.run()
     assert view.looped is True

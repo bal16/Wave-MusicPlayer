@@ -288,6 +288,11 @@ class FakeLibrary:
         return True
 
 
+class FakePlaylistsNoop:
+    def subscribe(self, listener):
+        pass
+
+
 class FakePlayerView:
     """Fake view with player-bar display API (no Tk)."""
 
@@ -324,7 +329,9 @@ def _controller(n=3):
     backend = FakeBackend({s.file_path: 200.0 for s in songs})
     player = PlayerService(backend)
     view = FakePlayerView()
-    controller = MainController(view=view, library=FakeLibrary(songs), player=player)
+    controller = MainController(
+        view=view, library=FakeLibrary(songs), player=player, playlists=FakePlaylistsNoop()
+    )
     return controller, view, backend
 
 
@@ -418,7 +425,9 @@ def test_controller_shutdown_releases_and_destroys():
             self.destroyed = True
 
     view, player = DestroyView(), ShutdownPlayer()
-    controller = MainController(view=view, library=FakeLibrary(), player=player)
+    controller = MainController(
+        view=view, library=FakeLibrary(), player=player, playlists=FakePlaylistsNoop()
+    )
     controller.shutdown()
     assert player.shutdowns == 1
     assert view.destroyed is True

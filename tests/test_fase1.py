@@ -65,6 +65,13 @@ class FakePlayer:
         return None
 
 
+class FakePlaylists:
+    """Minimal stand-in for PlaylistService (not under test here)."""
+
+    def subscribe(self, listener):
+        pass
+
+
 class FakeView:
     """Records show_songs payloads and after() scheduling (no Tk)."""
 
@@ -93,14 +100,18 @@ def test_format_song_row_mapping():
 
 def test_refresh_pushes_songs_to_view():
     view, library = FakeView(), FakeLibrary(songs=[_song(1), _song(2)])
-    controller = MainController(view=view, library=library, player=FakePlayer())
+    controller = MainController(
+        view=view, library=library, player=FakePlayer(), playlists=FakePlaylists()
+    )
     controller.refresh_library_view()
     assert [s.id for s in view.shown[0]] == [1, 2]
 
 
 def test_library_changed_event_marshals_through_after():
     view, library = FakeView(), FakeLibrary()
-    controller = MainController(view=view, library=library, player=FakePlayer())
+    controller = MainController(
+        view=view, library=library, player=FakePlayer(), playlists=FakePlaylists()
+    )
     controller.bind()
     assert len(library.subscribers) == 1
 
@@ -108,7 +119,7 @@ def test_library_changed_event_marshals_through_after():
     # must schedule (not directly call) the UI refresh.
     library.subscribers[0](added=2)
     assert len(view.shown) == 0
-    assert [(ms, f.__name__) for ms, f, _ in view.scheduled] == [(0, "refresh_library_view")]
+    assert [(ms, f.__name__) for ms, f, _ in view.scheduled] == [(0, "refresh_current_view")]
 
     # Running the scheduled callback performs the actual refresh.
     _, func, args = view.scheduled[0]
@@ -118,7 +129,9 @@ def test_library_changed_event_marshals_through_after():
 
 def test_select_stub_handles_missing_song():
     view, library = FakeView(), FakeLibrary()
-    controller = MainController(view=view, library=library, player=FakePlayer())
+    controller = MainController(
+        view=view, library=library, player=FakePlayer(), playlists=FakePlaylists()
+    )
     controller.handle_select_song(9999)  # must not raise
     controller.handle_select_song(1)  # empty library, still fine
 
