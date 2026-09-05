@@ -29,7 +29,7 @@ dev = [
 [tool.poe.tasks]
 start        = { cmd = "python main.py", help = "Run the app" }
 dev          = { cmd = "python main.py", help = "Run the app with debug logging", env = { LOGURU_LEVEL = "DEBUG" } }
-check        = { cmd = "python -m compileall -q main.py controller.py view.py config.py models domain infrastructure services app controllers views utils", help = "Byte-compile all first-party modules (no display needed)" }
+check        = { cmd = "python -m compileall -q main.py controller.py view.py config.py models components domain infrastructure services app controllers views utils", help = "Byte-compile all first-party modules (no display needed)" }
 lint         = { cmd = "ruff check tests/ utils/ domain/ infrastructure/ services/ app/ controllers/ views/", help = "Lint layered + tooling code (legacy UI files excluded)" }
 format       = { cmd = "ruff format tests/ utils/ domain/ infrastructure/ services/ app/ controllers/ views/", help = "Format layered + tooling code" }
 format-check = { cmd = "ruff format --check tests/ utils/ domain/ infrastructure/ services/ app/ controllers/ views/", help = "Fail if layered/tooling files are unformatted" }
