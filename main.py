@@ -1,7 +1,8 @@
 from loguru import logger
 
+from app.container import build_container
 from controller import MainController
-from models.database import engine
+from infrastructure.db import init_db
 from view import View
 
 
@@ -11,11 +12,16 @@ def main():
     logger.info("App Starting...")
 
     try:
-        db_engine = engine
+        # DB setup lives in main(), not inside the View (splash stays visual only).
+        init_db()
+
         view = View()
-        controller = MainController(model=db_engine, view=view)
+        container = build_container(view=None)
+        controller = MainController(view=view, library=container.library)
+        container.controller = controller
 
         view.set_controller(controller)
+        controller.run()
 
     except Exception as e:
         logger.critical(f"App Crash! Error: {e}")
