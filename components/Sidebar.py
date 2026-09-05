@@ -41,7 +41,8 @@ class Sidebar(ctk.CTkFrame):
         )
         btn.pack(fill="x", padx=20, pady=10)
 
-    def open_add_music_window(self):        """Ask for a folder, then hand it to the bound callback."""
+    def open_add_music_window(self):
+        """Ask for a folder, then hand it to the bound callback."""
         dir = filedialog.askdirectory()
         logger.debug(f"Selected directory: {dir}")
 
