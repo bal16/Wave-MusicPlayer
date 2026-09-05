@@ -37,3 +37,23 @@ def get_pause_button():
 
 def get_now_playing(size: int = 60):
     return load_icon("now_playing", size, size)
+
+
+def get_muted():
+    return load_icon("muted", 20, 20)
+
+
+def get_notmuted():
+    return load_icon("notmuted", 20, 20)
+
+
+def get_repeat():
+    return load_icon("repeat", 20, 20)
+
+
+def get_folder():
+    return load_icon("folder", 20, 20)
+
+
+def get_music():
+    return load_icon("music", 20, 20)

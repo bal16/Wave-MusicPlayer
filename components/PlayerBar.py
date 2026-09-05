@@ -5,7 +5,14 @@ from typing import TYPE_CHECKING
 
 import customtkinter as ctk
 
-from utils.icons import get_now_playing, get_pause_button, get_play_button
+from utils.icons import (
+    get_muted,
+    get_notmuted,
+    get_now_playing,
+    get_pause_button,
+    get_play_button,
+    get_repeat,
+)
 from views.theme import format_duration, theme
 
 if TYPE_CHECKING:
@@ -149,7 +156,8 @@ class PlayerBar(ctk.CTkFrame):
         # Loop button (non-functional until repeat is decided post-MVP).
         self.btn_loop = ctk.CTkButton(
             self.volume_frame,
-            text="🔁",
+            text="",
+            image=get_repeat(),
             width=40,
             fg_color="transparent",
             border_width=0,
@@ -160,7 +168,8 @@ class PlayerBar(ctk.CTkFrame):
         # Mute toggle button
         self.btn_volume = ctk.CTkButton(
             self.volume_frame,
-            text="🔊",
+            text="",
+            image=get_notmuted(),
             width=40,
             fg_color="transparent",
             border_width=0,
@@ -207,7 +216,7 @@ class PlayerBar(ctk.CTkFrame):
         self.btn_play.configure(image=get_pause_button() if playing else get_play_button())
 
     def set_muted(self, muted: bool) -> None:
-        self.btn_volume.configure(text="🔇" if muted else "🔊")
+        self.btn_volume.configure(image=get_muted() if muted else get_notmuted())
 
     def set_favorite(self, is_favorite: bool) -> None:
         self.like_button.configure(text="♥" if is_favorite else "♡")
