@@ -1,6 +1,6 @@
 """Schema tests: Song / Playlist / PlaylistSongLink roundtrips.
 
-Runs against an isolated SQLite file in tmp_path — never touches database.db.
+Runs against an isolated SQLite file in tmp_path — never touches data/app.db.
 GUI-free by design (see docs/architecture.md).
 """
 
@@ -8,7 +8,7 @@ import pytest
 from sqlalchemy.exc import IntegrityError
 from sqlmodel import Session, SQLModel, create_engine, select
 
-from models.schema import Playlist, Song
+from infrastructure.models import Playlist, Song
 
 
 @pytest.fixture()
