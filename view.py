@@ -46,6 +46,16 @@ class View(ctk.CTk):
         self.sidebar.on_add_folder = self._on_add_folder
         self.main_area.on_select = self._on_select_song
         self.main_area.on_favorite = self._on_favorite_song
+        self.player_bar.on_play = controller.handle_play_pause
+        self.player_bar.on_next = controller.handle_next
+        self.player_bar.on_prev = controller.handle_prev
+        self.player_bar.on_volume = controller.handle_volume
+        self.player_bar.on_mute = controller.handle_mute
+        self.player_bar.on_favorite = controller.handle_toggle_current_favorite
+        self.player_bar.on_seek = self._on_seek_commit
+        # Hold the progress ticker off for the whole slider drag.
+        self.player_bar.slider.bind("<ButtonPress-1>", self._on_seek_start, add="+")
+        self.player_bar.slider.bind("<ButtonRelease-1>", self._on_seek_end, add="+")
         logger.debug("Controller set and callbacks bound")
 
     def run_loading(self):
@@ -122,6 +132,20 @@ class View(ctk.CTk):
         """Render songs in place (no frame recreate)."""
         self.main_area.set_songs(songs)
 
+    def show_track(self, song: Song) -> None:
+        """Display the current track in the player bar."""
+        self.player_bar.set_track(song)
+        self.player_bar.set_playing(True)
+
+    def set_progress(self, seconds: float, total: float) -> None:
+        self.player_bar.set_progress(seconds, total)
+
+    def set_playing(self, playing: bool) -> None:
+        self.player_bar.set_playing(playing)
+
+    def set_muted(self, muted: bool) -> None:
+        self.player_bar.set_muted(muted)
+
     # -- Callbacks bound to the controller in set_controller() --
 
     def _on_add_folder(self, folder_path: str) -> None:
@@ -139,6 +163,22 @@ class View(ctk.CTk):
         if self.controller is not None:
             self.controller.handle_toggle_favorite(song_id)
             self.controller.refresh_library_view()
+
+    def _on_seek_start(self, _event=None) -> None:
+        if self.controller is not None:
+            self.controller.seeking = True
+
+    def _on_seek_end(self, _event=None) -> None:
+        if self.controller is not None:
+            self.controller.seeking = False
+
+    def _on_seek_commit(self, seconds: float) -> None:
+        if self.controller is not None:
+            self.controller.seeking = True
+            try:
+                self.controller.handle_seek(seconds)
+            finally:
+                self.controller.seeking = False
 
     # METHOD FOR DESTROY self.main_area WHEN CHANGE VIEW (Music / Playlist / MusicPlaylist)
     def change_main_content(self, new_content: ctk.CTkFrame):
