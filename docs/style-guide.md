@@ -30,6 +30,9 @@ Helpers: `format_duration(sec) -> "m:ss"` (DB keeps float seconds),
 3. Duration formatting never in SQL/service — view layer only.
 4. No new hex literals or font tuples outside `views/theme.py`.
 5. Icons via `utils/icons.load_icon(name, w, h)` (cached); no direct `Image.open` in views.
+6. Playlist rows reuse song-row styling (transparent frame, muted meta text).
+   Modal dialogs (`components/dialogs.py`) are `transient` + `grab_set` +
+   `wait_window`, returning values (never callbacks into services).
 
 ## 3. Out of scope (post-MVP)
 

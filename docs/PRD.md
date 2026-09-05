@@ -16,7 +16,7 @@ Versi baru (root repo saat ini):
 - UI `customtkinter` gelap ala Spotify: `Sidebar` + `MainContent` + `PlayerBar` + `SplashScreen`.
 - Persistensi SQLite via `SQLModel` (`models/schema.py`, `models/database.py`).
 - Metadata via `TinyTag` (`controller.py: add_music_from_folder`).
-- Status `TODO.md`: **Add Folder → DB sudah jalan. List Songs sudah jalan (Fase 1, tanpa search). Play Songs sudah jalan, smoke 1–8 lolos via miniaudio (Fase 2).**
+- Status `TODO.md`: **Add Folder → DB sudah jalan. List Songs sudah jalan (Fase 1, tanpa search). Play Songs sudah jalan, smoke 1–8 lolos via miniaudio (Fase 2). Playlist sudah jalan (Fase 3).**
 
 Dokumen ini mengunci scope agar List dan Play bisa diselesaikan tanpa redesign di tengah jalan.
 
@@ -80,6 +80,6 @@ Shuffle/repeat gaya versi lama (random ±2 index — buggy), album-art blur back
 
 ## 7. Open questions — DIPUTUSKAN
 
-1. Backend audio final: **ya** — `python-vlc` primer + fallback `miniaudio/just_playback` (detail di [Architecture §5](architecture.md#5-backend-audio-python-vlc-vs-alternatif)). Slot `PlayerBackend` ABC sudah ada di `domain/interfaces.py`; implementasi + `uv add` dijadwalkan Fase 2.
-2. Playlist: **ditunda** sampai F2+F3 stabil (tetap F4 opsional).
+1. Backend audio final: **ya** — `python-vlc` primer + `miniaudio` fallback ✅ selesai Fase 2 (detail di [Architecture §5](architecture.md#5-backend-audio-python-vlc-vs-alternatif)). Jalur VLC menunggu mesin libvlc 3.
+2. Playlist: **sudah dikerjakan** ✅ Fase 3 (F2+F3 stabil).
 3. Format minimum: **MP3+FLAC saja** hari pertama (`SUPPORTED_AUDIO_EXTENSIONS` di `infrastructure/audio_tagger.py`); OGG/M4A/WAV backlog pasca-MVP.

@@ -47,21 +47,26 @@ Target folder (migrasi bertahap, UI belakangan — sesuai PRD Fase 0):
 > untuk overview/chooser; `MainContent` punya tombol `+`/`×` per baris.
 
 ```txt
-main.py               # bootstrap saja
-config.py             # konstanta murni, tanpa load icon saat import
+main.py               # bootstrap + init_db + controller.bind + startup load
+config.py             # re-export theme (kompat); nilai kanonis di views/theme.py
 app/container.py      # wiring: engine → repo → service → view → controller
 domain/entities.py    # Song, Playlist (dataclass, tanpa SQLModel/Tk)
-domain/interfaces.py  # SongRepository (ABC), PlayerBackend (ABC), EventBus
+domain/interfaces.py  # SongRepository, PlaylistRepository, PlayerBackend ABC + EventBus
 infrastructure/db.py          # engine + init_db + session factory (path absolut)
-infrastructure/models.py      # SQLModel (pindahan models/schema.py) — lihat schema.md
-infrastructure/song_repository.py  # SQLModel implementation
-infrastructure/audio_tagger.py     # bungkus TinyTag: path → SongDraft
-infrastructure/player_vlc.py       # PlayerBackend via python-vlc
+infrastructure/models.py      # SQLModel kanonis — lihat schema.md
+infrastructure/song_repository.py      # SongRepository via SQLModel
+infrastructure/playlist_repository.py  # PlaylistRepository via SQLModel (Fase 3)
+infrastructure/audio_tagger.py         # bungkus TinyTag: path → SongDraft
+infrastructure/player_vlc.py           # PlayerBackend via python-vlc (Fase 2)
+infrastructure/player_miniaudio.py     # PlayerBackend fallback (Fase 2)
+infrastructure/probe.py                # probe subprocess anti-abort C (Fase 2)
 services/library_service.py   # scan_folder(), list_songs(), toggle_favorite()
-services/player_service.py    # play/pause/next/seek/volume + state + listener
-controllers/main_controller.py# tipis: handle_* saja, run() gantikan mainloop di __init__
-views/main_view.py + splash.py + sidebar.py + song_list.py + player_bar.py
-utils/icons.py + utils/event_bus.py
+services/player_service.py    # queue + transport + auto-next wrap (Fase 2)
+services/playlist_service.py  # CRUD playlist + link, event playlist_changed (Fase 3)
+controllers/main_controller.py# tipis: handle_* + current_view + ticker after(1000)
+components/Sidebar.py + MainContent.py + PlayerBar.py + PlaylistOverview.py + dialogs.py
+views/theme.py        # design system (lihat Style Guide)
+utils/icons.py        # cached icon loader
 ```
 
 Aturan:
@@ -89,6 +94,12 @@ classDiagram
     +set_songs(songs)
     +on_select: Callable
     +on_favorite: Callable
+    +on_add_to_playlist: Callable
+    +on_remove_from_playlist: Callable
+  }
+  class PlaylistOverview {
+    +set_playlists(playlists)
+    +on_select, on_create, on_rename, on_delete: Callable
   }
   class PlayerBar {
     +set_track(song)
@@ -99,10 +110,27 @@ classDiagram
     +handle_add_folder(path)
     +handle_select_song(id)
     +handle_play_pause()
+    +handle_show_playlists()
+    +handle_select_playlist(id)
+    +handle_create_playlist(name)
+    +handle_add_to_playlist(pid, sid)
   }
   class LibraryService {
     +scan_folder(path) : int
     +list_songs() : list~Song~
+  }
+  class PlaylistService {
+    +create_playlist(name), rename_playlist(id, name), delete_playlist(id)
+    +add_song(pid, sid), remove_song(pid, sid)
+    +songs_in_playlist(pid) : list~Song~
+    +subscribe(listener)
+  }
+  class PlaylistRepository {
+    <<ABC>>
+    +create() +rename() +delete() +list_all()
+    +add_song() +remove_song() +songs_in_playlist()
+  }
+  class SqlPlaylistRepository {
   }
   class PlayerService {
     +play(song), pause(), seek(), set_volume()
@@ -120,12 +148,16 @@ classDiagram
 
   MainView *-- Sidebar
   MainView *-- SongList
+  MainView *-- PlaylistOverview
   MainView *-- PlayerBar
   MainController --> MainView
   MainController --> LibraryService
   MainController --> PlayerService
+  MainController --> PlaylistService
   LibraryService --> SongRepository
   SqlSongRepository ..|> SongRepository
+  PlaylistService --> PlaylistRepository
+  SqlPlaylistRepository ..|> PlaylistRepository
   PlayerService --> PlayerBackend
 ```
 
@@ -146,7 +178,7 @@ controller.run()
 
 - **Add (PRD F1):** `Sidebar --on_add_folder--> Controller.handle_add_folder --scan (thread)--> LibraryService --publish library_changed--> EventBus --show_songs--> SongList`. Menggantikan `destroy()`-recreate.
 - **List (PRD F2):** `Controller.handle_show_music --list_songs--> LibraryService --list_all--> Repo --> SongList.set_songs()`. Sumber kebenaran = tabel `song` di [Schema §2](schema.md#2-tabel).
-- **Play (PRD F3):** `SongList --on_select(id)--> Controller --list_songs--> LibraryService` (antrean = full library sesuai urutan tampil, mulai dari lagu diklik) `--play_queue--> PlayerService --load/play--> PlayerBackend --set_track/set_progress--> PlayerBar`. Posisi slider via `after(1000)`, event `media_end` → auto-next dengan wrap ke lagu pertama. (Sumber antrean akan berevolusi saat search/playlist datang.)
+- **Play (PRD F3):** `SongList --on_select(id)--> Controller --songs sesuai view aktif--> Service (`library.list_songs` atau `playlists.songs_in_playlist`) `--play_queue--> PlayerService --load/play--> PlayerBackend --set_track/set_progress--> PlayerBar`. Posisi slider via `after(1000)`, event `media_end` → auto-next dengan wrap ke lagu pertama.
 
 Aturan threading: TinyTag + VLC callback **tidak boleh** menyentuh widget langsung; selalu lewat `view.after(0, ...)` atau EventBus.
 
