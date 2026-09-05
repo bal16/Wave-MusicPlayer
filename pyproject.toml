@@ -14,3 +14,19 @@ dependencies = [
 
 [tool.uv]
 managed = true
+
+[dependency-groups]
+dev = [
+    "poethepoet>=0.48.0",
+    "pyinstaller>=6.22.2",
+    "pyinstaller-hooks-contrib>=2026.7",
+]
+
+[tool.poe.tasks]
+start     = { cmd = "python main.py", help = "Run the app" }
+dev       = { cmd = "python main.py", help = "Run the app with debug logging", env = { LOGURU_LEVEL = "DEBUG" } }
+check     = { cmd = "python -m py_compile main.py controller.py view.py config.py models/database.py models/schema.py", help = "Byte-compile all modules (no display needed)" }
+build     = { sequence = [{ ref = "check" }, { ref = "build-exe" }], help = "Check + build onedir bundle into dist/Wave/" }
+build-exe = { cmd = "pyinstaller wave.spec --noconfirm", help = "Build onedir bundle via wave.spec" }
+dist      = { cmd = "pyinstaller wave-onefile.spec --noconfirm", help = "Build single-file binary into dist/Wave" }
+clean     = { cmd = "python -c \"import shutil; [shutil.rmtree(d, ignore_errors=True) for d in ['build', 'dist']]\"", help = "Remove build/ and dist/" }
