@@ -12,25 +12,29 @@ import threading
 from loguru import logger
 
 from domain.interfaces import BackendUnavailableError, PlayerBackend
+from infrastructure.probe import probe_in_subprocess as _probe_in_subprocess
 
 _CHANNELS = 2
 _SAMPLE_RATE = 44100
 
 
 def is_available() -> bool:
-    """True when a miniaudio playback device can be opened here."""
-    try:
-        import miniaudio
+    """True when a miniaudio playback device can be opened here.
 
-        device = miniaudio.PlaybackDevice(
-            output_format=miniaudio.SampleFormat.SIGNED16,
-            nchannels=_CHANNELS,
-            sample_rate=_SAMPLE_RATE,
-        )
-        device.close()
-        return True
-    except Exception:
+    Probed in a subprocess: device enumeration can abort at C level on
+    systems without a usable audio device.
+    """
+    try:
+        import miniaudio  # noqa: F401 -- fast fail when miniaudio is missing
+    except ImportError:
         return False
+    return _probe_in_subprocess(
+        "import miniaudio;"
+        " d = miniaudio.PlaybackDevice("
+        " output_format=miniaudio.SampleFormat.SIGNED16,"
+        " nchannels=2, sample_rate=44100);"
+        " d.close()"
+    )
 
 
 class MiniaudioBackend(PlayerBackend):

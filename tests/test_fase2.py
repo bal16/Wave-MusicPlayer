@@ -178,6 +178,16 @@ def test_duration_falls_back_to_song_metadata():
     assert service.get_duration() == 225.0
 
 
+# -- Probes --
+
+
+def test_probe_reports_subprocess_outcome():
+    from infrastructure.probe import probe_in_subprocess
+
+    assert probe_in_subprocess("pass") is True
+    assert probe_in_subprocess("raise SystemExit(1)") is False
+
+
 # -- Factory --
 
 

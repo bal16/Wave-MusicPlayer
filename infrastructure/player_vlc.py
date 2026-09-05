@@ -19,6 +19,7 @@ import time
 from loguru import logger
 
 from domain.interfaces import BackendUnavailableError, PlayerBackend
+from infrastructure.probe import probe_in_subprocess as _probe_in_subprocess
 
 # Position tolerance (seconds) for natural-end detection on the poll path.
 _END_EPSILON = 1.0
@@ -30,16 +31,17 @@ def is_available() -> bool:
 
     Probes deeper than Instance() alone: some libvlc builds (notably 4.0
     dev snapshots) create an Instance fine but fail at player creation.
+
+    The probe runs in a subprocess because libvlc mismatches can abort at
+    C level (uncatchable in-process) — an abort becomes a non-zero exit.
     """
     try:
-        import vlc
-
-        instance = vlc.Instance("--no-video")
-        instance.media_player_new()
-        instance.release()
-        return True
-    except Exception:
+        import vlc  # noqa: F401 -- fast fail when python-vlc is missing
+    except ImportError:
         return False
+    return _probe_in_subprocess(
+        "import vlc; i = vlc.Instance('--no-video'); i.media_player_new(); i.release()"
+    )
 
 
 class VlcBackend(PlayerBackend):

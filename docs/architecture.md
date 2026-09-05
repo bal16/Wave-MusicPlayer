@@ -162,7 +162,7 @@ Rekomendasi konkret:
 3. ✅ SELESAI — `pyproject.toml`: `python-vlc` + `miniaudio` via `uv add`. `pygame` tidak dibawa ke versi baru.
 4. ✅ SELESAI — `PlayerService` hanya tahu ABC → ganti backend tanpa ubah UI/controller.
 
-Catatan kompatibilitas (terverifikasi): libvlc 4 menghapus event-manager API, media parsing, dan `media_player_stop`. `VlcBackend` memakai event bila ada, selebihnya polling-monitor + pause/rewind sebagai stop; durasi yang gagal dibaca VLC ditutup fallback metadata lagu. `python-vlc` vs snapshot libvlc 4.0-dev bisa abort di level C (tidak tertangkap `try`); bila VLC crash di mesinmu, paksa fallback via `WAVE_AUDIO_BACKEND=miniaudio`.
+Catatan kompatibilitas (terverifikasi): libvlc 4 menghapus event-manager API, media parsing, dan `media_player_stop`. `VlcBackend` memakai event bila ada, selebihnya polling-monitor + pause/rewind sebagai stop; durasi yang gagal dibaca VLC ditutup fallback metadata lagu. `python-vlc` vs snapshot libvlc 4.0-dev bisa abort di level C (tidak tertangkap `try`, bahkan non-deterministik antar proses); karena itu `is_available()` kedua backend berjalan sebagai probe subprocess — abort menjadi exit code non-nol dan factory jatuh ke miniaudio. Bila VLC crash di mesinmu, paksa fallback via `WAVE_AUDIO_BACKEND=miniaudio`.
 
 ## 6. Langkah migrasi (tidak merusak yang jalan)
 
