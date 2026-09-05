@@ -1,23 +1,12 @@
-from sqlmodel import SQLModel, create_engine, Session
-from loguru import logger
+"""Legacy database path — re-export shim over infrastructure.db.
 
-DB_NAME = "database.db"
+Canonical engine lives in infrastructure.db with an absolute data/app.db
+path. Kept so legacy imports keep working during migration.
+"""
 
-sqlite_url = f"sqlite:///{DB_NAME}"
-engine = create_engine(sqlite_url, echo=False, connect_args={"check_same_thread": False})
+from infrastructure.db import DB_PATH, DB_URL, engine, get_session, init_db
 
-def init_db():
-    """
-    This function will be called when the Splash Screen is loading. \n
-    His job is to create a table if one does not already exist.
-    """
-    # Import schema here so SQLModel knows which tables to create
-    from models.schema import Song, Playlist, PlaylistSongLink  # noqa: F401
-    
-    # Magic command to create tables
-    SQLModel.metadata.create_all(engine)
-    logger.info("Database initialized successfully.")
+# Legacy name used across old code/tests.
+DB_NAME = str(DB_PATH)
 
-def get_session():
-    """Helper to get a database connection"""
-    return Session(engine)
+__all__ = ["DB_NAME", "DB_PATH", "DB_URL", "engine", "get_session", "init_db"]
