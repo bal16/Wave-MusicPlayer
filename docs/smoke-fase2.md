@@ -21,7 +21,7 @@
 | 4   | Drag slider ke tengah, lepas                       | Lompat akurat (±1 dtk, cocokkan label waktu)        |
 | 5   | Next di lagu terakhir / Prev di lagu pertama       | Wrap (tidak berhenti/mati)                          |
 | 6   | Biarkan 1 lagu habis (atau pakai file pendek)      | Auto-next ke lagu berikut                           |
-| 7   | Geser volume slider; tekan tombol 🔊 2x            | Volume berubah; mute → bisu → kembali seperti semula |
+| 7   | Geser volume slider; tekan tombol 🔊 2x            | Volume berubah; mute → bisu → kembali seperti semula|
 | 8   | Klik ♡ di PlayerBar                                | Lagu tampil ♥; list ikut refresh                    |
 | 9   | Tutup app, jalankan `WAVE_AUDIO_BACKEND=miniaudio` | Bunyi via fallback; kasus 1–7 tetap lolos           |
 
