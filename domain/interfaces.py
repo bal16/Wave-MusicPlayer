@@ -14,6 +14,10 @@ from domain.entities import Song, SongDraft
 LIBRARY_CHANGED_EVENT = "library_changed"
 
 
+class BackendUnavailableError(RuntimeError):
+    """Raised when an audio backend cannot start (missing libvlc, no device)."""
+
+
 class SongRepository(ABC):
     """Song persistence. Implemented by infrastructure.song_repository."""
 

@@ -7,7 +7,9 @@ requires-python = ">=3.11"
 dependencies = [
     "customtkinter>=6.0.0",
     "loguru>=0.7.3",
+    "miniaudio>=1.71",
     "pillow>=12.3.0",
+    "python-vlc>=3.0.21203",
     "sqlmodel>=0.0.42",
     "tinytag>=2.3.1",
 ]
