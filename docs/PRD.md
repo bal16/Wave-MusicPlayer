@@ -68,7 +68,7 @@ Dokumen ini mengunci scope agar List dan Play bisa diselesaikan tanpa redesign d
 
 ## 5. Out of scope eksplisit
 
-Shuffle/repeat gaya versi lama (random ±2 index — buggy), album-art blur background, multi-folder watch, drag-and-drop. Boleh masuk backlog pasca-MVP, bukan sekarang. Tombol loop (🔁) di PlayerBar tampil tapi non-fungsional sampai repeat diputuskan pasca-MVP.
+Shuffle/repeat gaya versi lama (random ±2 index — buggy), album-art blur background, multi-folder watch, drag-and-drop. Boleh masuk backlog pasca-MVP, bukan sekarang. Tombol loop (🔁) di PlayerBar tampil tapi non-fungsional sampai repeat diputuskan pasca-MVP. Cover display (embedded → bundled `now_playing.png`) ditambahkan kecil di luar MVP.
 
 ## 6. Roadmap bertahap (sesuai pilihan: migrasi bertahap, opsi A)
 

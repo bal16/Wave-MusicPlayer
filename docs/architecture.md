@@ -56,11 +56,11 @@ infrastructure/db.py          # engine + init_db + session factory (path absolut
 infrastructure/models.py      # SQLModel kanonis — lihat schema.md
 infrastructure/song_repository.py      # SongRepository via SQLModel
 infrastructure/playlist_repository.py  # PlaylistRepository via SQLModel (Fase 3)
-infrastructure/audio_tagger.py         # bungkus TinyTag: path → SongDraft
+infrastructure/audio_tagger.py         # bungkus TinyTag: path → SongDraft + read_cover
 infrastructure/player_vlc.py           # PlayerBackend via python-vlc (Fase 2)
 infrastructure/player_miniaudio.py     # PlayerBackend fallback (Fase 2)
 infrastructure/probe.py                # probe subprocess anti-abort C (Fase 2)
-services/library_service.py   # scan_folder(), list_songs(), toggle_favorite()
+services/library_service.py   # scan_folder(), list_songs(), toggle_favorite(), get_cover()
 services/player_service.py    # queue + transport + auto-next wrap (Fase 2)
 services/playlist_service.py  # CRUD playlist + link, event playlist_changed (Fase 3)
 controllers/main_controller.py# tipis: handle_* + current_view + ticker after(1000)
