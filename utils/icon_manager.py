@@ -1,7 +1,8 @@
-from PIL import Image
-import customtkinter as ctk
 import os
 import sys
+
+import customtkinter as ctk
+from PIL import Image
 
 
 def resource_path(relative: str) -> str:
@@ -31,7 +32,7 @@ class IconManager:
                 dark_image=Image.open(os.path.join(self.path, f"{name}_dark.png")),
                 size=size,
             )
-        
+
         return ctk.CTkImage(
             light_image=Image.open(os.path.join(self.path, f"{name}.png")),
             dark_image=Image.open(os.path.join(self.path, f"{name}.png")),
