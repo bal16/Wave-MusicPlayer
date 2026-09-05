@@ -17,7 +17,12 @@ def main():
 
         view = View()
         container = build_container(view=None)
-        controller = MainController(view=view, library=container.library, player=container.player)
+        controller = MainController(
+            view=view,
+            library=container.library,
+            player=container.player,
+            playlists=container.playlists,
+        )
         container.controller = controller
 
         view.set_controller(controller)

@@ -16,9 +16,11 @@ from controllers.main_controller import MainController
 from domain.interfaces import BackendUnavailableError, EventBus, PlayerBackend
 from infrastructure.audio_tagger import TinyTagAudioTagger
 from infrastructure.db import engine as default_engine
+from infrastructure.playlist_repository import SqlPlaylistRepository
 from infrastructure.song_repository import SqlSongRepository
 from services.library_service import LibraryService
 from services.player_service import PlayerService
+from services.playlist_service import PlaylistService
 
 
 def create_player_backend() -> tuple[str, PlayerBackend]:
@@ -55,6 +57,7 @@ class Container:
     library: LibraryService
     bus: EventBus
     player: PlayerService
+    playlists: PlaylistService
     backend_name: str = "vlc"
     controller: MainController | None = None
 
@@ -77,15 +80,17 @@ def build_container(
     else:
         backend_name = type(backend).__name__
     player = PlayerService(backend)
+    playlists = PlaylistService(SqlPlaylistRepository(eng), event_bus=bus)
     container = Container(
         engine=eng,
         repo=repo,
         library=library,
         bus=bus,
         player=player,
+        playlists=playlists,
         backend_name=backend_name,
     )
     if view is not None:
-        controller = MainController(view=view, library=library, player=player)
+        controller = MainController(view=view, library=library, player=player, playlists=playlists)
         container.controller = controller
     return container

@@ -28,13 +28,24 @@ class MainController(ThinController):
         view: View | None = None,
         library: Any | None = None,
         player: Any | None = None,
+        playlists: Any | None = None,
     ):
-        if library is not None and player is not None and view is not None:
-            super().__init__(view=view, library=library, player=player)
+        if (
+            library is not None
+            and player is not None
+            and playlists is not None
+            and view is not None
+        ):
+            super().__init__(view=view, library=library, player=player, playlists=playlists)
             return
         # Legacy construction: build the default backend graph around the engine.
         container = build_container(view=None, engine=model)
-        super().__init__(view=view, library=container.library, player=container.player)
+        super().__init__(
+            view=view,
+            library=container.library,
+            player=container.player,
+            playlists=container.playlists,
+        )
         logger.debug("Legacy MainController shim delegating to LibraryService")
 
     def run(self) -> None:
