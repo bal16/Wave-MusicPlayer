@@ -33,3 +33,14 @@ class Song:
     duration: float = 0.0
     is_favorite: bool = False
     added_at: datetime = field(default_factory=_utcnow)
+
+
+@dataclass(frozen=True, slots=True)
+class Playlist:
+    """Entity used by services / controllers / views."""
+
+    id: int | None
+    name: str
+    description: str = ""
+    song_count: int = 0
+    created_at: datetime = field(default_factory=_utcnow)

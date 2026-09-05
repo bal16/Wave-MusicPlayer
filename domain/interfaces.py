@@ -9,9 +9,10 @@ from abc import ABC, abstractmethod
 from collections.abc import Callable
 from typing import Protocol
 
-from domain.entities import Song, SongDraft
+from domain.entities import Playlist, Song, SongDraft
 
 LIBRARY_CHANGED_EVENT = "library_changed"
+PLAYLIST_CHANGED_EVENT = "playlist_changed"
 
 
 class BackendUnavailableError(RuntimeError):
@@ -38,6 +39,49 @@ class SongRepository(ABC):
     @abstractmethod
     def toggle_favorite(self, song_id: int) -> bool | None:
         """Flip the flag. Return the new value, or None when id is missing."""
+        raise NotImplementedError
+
+
+class PlaylistRepository(ABC):
+    """Playlist + link persistence. Implemented by infrastructure.playlist_repository."""
+
+    @abstractmethod
+    def create(self, name: str, description: str = "") -> Playlist:
+        """Insert a playlist. Raises ValueError on blank names."""
+        raise NotImplementedError
+
+    @abstractmethod
+    def rename(self, playlist_id: int, name: str) -> Playlist | None:
+        """Rename. Returns None when id is missing; ValueError on blank names."""
+        raise NotImplementedError
+
+    @abstractmethod
+    def delete(self, playlist_id: int) -> bool:
+        """Delete playlist + its links (CASCADE). Songs are never deleted."""
+        raise NotImplementedError
+
+    @abstractmethod
+    def list_all(self) -> list[Playlist]:
+        """All playlists with song counts, ORDER BY created_at DESC."""
+        raise NotImplementedError
+
+    @abstractmethod
+    def get_by_id(self, playlist_id: int) -> Playlist | None:
+        raise NotImplementedError
+
+    @abstractmethod
+    def add_song(self, playlist_id: int, song_id: int) -> bool:
+        """Link a song. Idempotent; False when playlist or song is missing."""
+        raise NotImplementedError
+
+    @abstractmethod
+    def remove_song(self, playlist_id: int, song_id: int) -> bool:
+        """Unlink a song (never deletes the song itself)."""
+        raise NotImplementedError
+
+    @abstractmethod
+    def songs_in_playlist(self, playlist_id: int) -> list[Song]:
+        """Songs of a playlist, ORDER BY song added_at DESC."""
         raise NotImplementedError
 
 
