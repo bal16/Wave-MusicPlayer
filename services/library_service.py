@@ -2,11 +2,17 @@
 
 Pure Python: no Tk, no SQLModel, no TinyTag. All collaborators are
 injected as interfaces; unit-test with a fake repo + tagger.
+
+Threading: scan_folder() is designed to run on a worker thread. It never
+touches widgets; progress goes to the optional callback and completion is
+announced via the library_changed event (the controller marshals both to
+the UI thread with after()).
 """
 
 from __future__ import annotations
 
 import os
+from collections.abc import Callable
 
 from loguru import logger
 
@@ -30,10 +36,16 @@ class LibraryService:
         if self._bus is not None:
             self._bus.subscribe(LIBRARY_CHANGED_EVENT, listener)
 
-    def scan_folder(self, folder_path: str) -> int:
+    def scan_folder(
+        self,
+        folder_path: str,
+        progress: Callable[[int, int], None] | None = None,
+    ) -> int:
         """Recursively scan mp3+flac into the DB. Return the new-song count.
 
         Cancelled dialog (""/None/missing dir) returns 0 instead of crashing.
+        progress(done, total) is called as files are parsed (two-pass walk
+        so total is known upfront). Publishes nothing when nothing is added.
         """
         if not folder_path:
             logger.debug("scan_folder cancelled/empty — nothing to do")
@@ -42,13 +54,20 @@ class LibraryService:
             logger.warning(f"scan_folder: not a directory: {folder_path!r}")
             return 0
 
+        all_files = [
+            os.path.join(root, name)
+            for root, _dirs, files in os.walk(folder_path)
+            for name in files
+        ]
+        total = len(all_files)
+
         drafts: list[SongDraft] = []
-        for root, _dirs, files in os.walk(folder_path):
-            for name in files:
-                full = os.path.join(root, name)
-                draft = self._tagger.read(full)
-                if draft is not None:
-                    drafts.append(draft)
+        for done, full in enumerate(all_files, start=1):
+            draft = self._tagger.read(full)
+            if draft is not None:
+                drafts.append(draft)
+            if progress is not None:
+                progress(done, total)
 
         added = self._repo.add_all(drafts)
         logger.info(f"scan_folder {folder_path!r}: {added} new / {len(drafts)} parsed")

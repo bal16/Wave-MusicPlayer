@@ -7,6 +7,7 @@ always marshalled to the UI thread via view.after().
 
 from __future__ import annotations
 
+import threading
 from typing import TYPE_CHECKING, Any
 
 from loguru import logger
@@ -47,6 +48,7 @@ class MainController:
         # True while the user drags the seek slider (ticker holds off).
         self.seeking = False
         self._ticker_running = False
+        self._scanning = False
         player.subscribe(TRACK_CHANGED_EVENT, self._on_track_changed)
         player.subscribe(STATE_CHANGED_EVENT, self._on_player_state)
         playlists.subscribe(self._on_playlist_changed)
@@ -99,9 +101,37 @@ class MainController:
 
     # -- Library handlers --
 
-    def handle_add_folder(self, folder_path: str) -> int:
-        """Entry point for Sidebar.on_add_folder. Returns new-song count."""
-        return self.library.scan_folder(folder_path)
+    def handle_add_folder(self, folder_path: str) -> None:
+        """Entry point for Sidebar.on_add_folder. Scans on a worker thread.
+
+        A second scan while one runs is ignored. Completion arrives via
+        the library_changed event; failures are logged and shown.
+        """
+        if self._scanning:
+            logger.warning("Scan already running — ignoring new folder")
+            return
+        if not folder_path:
+            return
+        self._scanning = True
+        self.view.show_scan_started()
+        thread = threading.Thread(target=self._scan_in_background, args=(folder_path,), daemon=True)
+        thread.start()
+
+    def _scan_in_background(self, folder_path: str) -> None:
+        try:
+            self.library.scan_folder(folder_path, progress=self._report_scan_progress)
+        except Exception as e:
+            logger.error(f"Background scan failed: {e}")
+            self.view.after(0, self.view.show_scan_failed, str(e))
+        finally:
+            self._scanning = False
+            # Scheduled after the refresh (publish happens before this),
+            # so the dialog closes on completion even with zero new songs.
+            self.view.after(0, self.view.show_scan_finished)
+
+    def _report_scan_progress(self, done: int, total: int) -> None:
+        # Runs on the worker thread — marshal to the UI thread.
+        self.view.after(0, self.view.show_scan_progress, done, total)
 
     def handle_list_songs(self, query: str = "", favorites_only: bool = False):
         return self.library.list_songs(query=query, favorites_only=favorites_only)

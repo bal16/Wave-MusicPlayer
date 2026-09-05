@@ -23,6 +23,7 @@ class View(ctk.CTk):
     def __init__(self):
         super().__init__()
         self.controller: Controller | None = None  # Placeholder
+        self._scan_dialog: ctk.CTkToplevel | None = None
 
         self.withdraw()
 
@@ -128,22 +129,6 @@ class View(ctk.CTk):
         self.player_bar = PlayerBar(self, height=90, corner_radius=0, fg_color="#0f0f0f")
         self.player_bar.grid(row=1, column=0, columnspan=2, sticky="ew")
 
-    ## METHOD FOR DESTROY self.main_area WHEN REFRESH IS NEEDED
-    def refresh_song_list(self):
-        """Deprecated: prefer show_songs() in-place updates.
-
-        Kept for one phase so external callers keep working.
-        """
-        logger.warning("refresh_song_list() is deprecated, use show_songs()")
-        if self.controller is not None:
-            self.controller.refresh_library_view()
-        else:
-            self.playlist_view.grid_remove()
-            self.main_area.destroy()
-            self.main_area = MainContent(self, fg_color="#121212", corner_radius=0)
-            self.main_area.grid(row=0, column=1, sticky="nsew", padx=0, pady=0)
-            logger.debug("MainContent refreshed")
-
     def show_songs(self, songs: list[Song]) -> None:
         """Render songs in place (no frame recreate)."""
         self.playlist_view.grid_remove()
@@ -177,6 +162,48 @@ class View(ctk.CTk):
 
     def set_muted(self, muted: bool) -> None:
         self.player_bar.set_muted(muted)
+
+    # -- Scan progress dialog (driven by the controller, UI thread only) --
+
+    def show_scan_started(self) -> None:
+        """Open a small modal progress dialog for the background scan."""
+        self.show_scan_finished()
+        top = ctk.CTkToplevel(self)
+        top.title("Scanning music")
+        top.geometry("320x140")
+        top.transient(self)
+        top.grab_set()
+        ctk.CTkLabel(top, text="Scanning folder…").pack(pady=(20, 10), padx=20)
+        bar = ctk.CTkProgressBar(top, width=260)
+        bar.set(0)
+        bar.pack(pady=5, padx=20)
+        self._scan_dialog = top
+        self._scan_bar = bar
+
+    def show_scan_progress(self, done: int, total: int) -> None:
+        """Update the determinate bar (no-op without an open dialog)."""
+        if self._scan_dialog is None or not self._scan_dialog.winfo_exists():
+            return
+        fraction = (done / total) if total > 0 else 0.0
+        self._scan_bar.set(max(0.0, min(1.0, fraction)))
+        self._scan_dialog.title(f"Scanning music — {done}/{total}")
+
+    def show_scan_finished(self) -> None:
+        """Close the progress dialog if open."""
+        if self._scan_dialog is not None:
+            try:
+                if self._scan_dialog.winfo_exists():
+                    self._scan_dialog.destroy()
+            except Exception as e:
+                logger.debug(f"Scan dialog close failed (ignored): {e}")
+            self._scan_dialog = None
+
+    def show_scan_failed(self, message: str) -> None:
+        """Close the dialog and surface the error."""
+        from tkinter import messagebox
+
+        self.show_scan_finished()
+        messagebox.showerror("Scan failed", message)
 
     # -- Callbacks bound to the controller in set_controller() --
 
@@ -224,9 +251,7 @@ class View(ctk.CTk):
         if self.controller is None:
             return
         current = self.controller.handle_get_playlist(playlist_id)
-        name = ask_text(
-            "Rename playlist", "New name:", initial=current.name if current else ""
-        )
+        name = ask_text("Rename playlist", "New name:", initial=current.name if current else "")
         if name is not None:
             try:
                 self.controller.handle_rename_playlist(playlist_id, name)
@@ -257,9 +282,7 @@ class View(ctk.CTk):
                 return
             self.controller.handle_add_to_playlist(created.id, song_id)
             return
-        choice = choose_playlist(
-            self, playlists, song.title if song else f"song {song_id}"
-        )
+        choice = choose_playlist(self, playlists, song.title if song else f"song {song_id}")
         if choice is None:
             return
         if choice == "new":
@@ -296,11 +319,3 @@ class View(ctk.CTk):
                 self.controller.handle_seek(seconds)
             finally:
                 self.controller.seeking = False
-
-    # METHOD FOR DESTROY self.main_area WHEN CHANGE VIEW (Music / Playlist / MusicPlaylist)
-    def change_main_content(self, new_content: ctk.CTkFrame):
-        """Change the main content area to a new frame"""
-        self.main_area.destroy()
-        self.main_area = new_content
-        self.main_area.grid(row=0, column=1, sticky="nsew", padx=0, pady=0)
-        logger.debug("MainContent changed")

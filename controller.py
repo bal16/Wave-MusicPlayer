@@ -52,6 +52,7 @@ class MainController(ThinController):
         logger.info("Application main loop has started")
         self.view.mainloop()
 
-    def add_music_from_folder(self, folder_path: str) -> int:
-        """Legacy entry point used by Sidebar. Returns new-song count."""
-        return self.handle_add_folder(folder_path)
+    def add_music_from_folder(self, folder_path: str) -> None:
+        """Legacy entry point (kept for compat). Scan runs in background;
+        completion arrives via the library_changed event."""
+        self.handle_add_folder(folder_path)
