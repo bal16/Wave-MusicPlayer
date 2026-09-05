@@ -7,3 +7,7 @@ __pycache__/
 database.db
 build/
 dist/
+
+.env.*
+
+.idea/
