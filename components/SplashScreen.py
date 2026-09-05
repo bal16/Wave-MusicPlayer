@@ -1,7 +1,7 @@
 import customtkinter as ctk
 
-from views.theme import theme
 from utils.icons import get_logo_box
+from views.theme import theme
 
 
 class SplashScreen(ctk.CTkToplevel):

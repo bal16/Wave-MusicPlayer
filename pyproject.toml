@@ -30,9 +30,9 @@ dev = [
 start        = { cmd = "python main.py", help = "Run the app" }
 dev          = { cmd = "python main.py", help = "Run the app with debug logging", env = { LOGURU_LEVEL = "DEBUG" } }
 check        = { cmd = "python -m compileall -q main.py view.py components domain infrastructure services app controllers views utils", help = "Byte-compile all first-party modules (no display needed)" }
-lint         = { cmd = "ruff check tests/ utils/ domain/ infrastructure/ services/ app/ controllers/ views/", help = "Lint layered + tooling code (legacy UI files excluded)" }
-format       = { cmd = "ruff format tests/ utils/ domain/ infrastructure/ services/ app/ controllers/ views/", help = "Format layered + tooling code" }
-format-check = { cmd = "ruff format --check tests/ utils/ domain/ infrastructure/ services/ app/ controllers/ views/", help = "Fail if layered/tooling files are unformatted" }
+lint         = { cmd = "ruff check .", help = "Lint whole repo (excludes __old/.venv/build/dist)" }
+format       = { cmd = "ruff format .", help = "Format whole repo" }
+format-check = { cmd = "ruff format --check .", help = "Fail if any file is unformatted" }
 test         = { cmd = "pytest", help = "Run test suite" }
 quality      = { sequence = [{ ref = "check" }, { ref = "lint" }, { ref = "format-check" }, { ref = "test" }], help = "Full quality gate" }
 build        = { sequence = [{ ref = "check" }, { ref = "build-exe" }], help = "Check + build onedir bundle into dist/Wave/" }

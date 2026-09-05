@@ -36,9 +36,7 @@ def choose_playlist(parent, playlists: list[Playlist], song_title: str) -> int |
     top.transient(parent)
     top.grab_set()
 
-    ctk.CTkLabel(top, text=f"Add '{song_title}' to…", font=theme.fonts.body).pack(
-        pady=15, padx=20
-    )
+    ctk.CTkLabel(top, text=f"Add '{song_title}' to…", font=theme.fonts.body).pack(pady=15, padx=20)
 
     scroll = ctk.CTkScrollableFrame(top, fg_color="transparent")
     scroll.pack(fill="both", expand=True, padx=10, pady=5)
@@ -56,9 +54,9 @@ def choose_playlist(parent, playlists: list[Playlist], song_title: str) -> int |
             command=lambda pid=playlist.id: pick(pid),
         ).pack(fill="x", pady=3)
 
-    ctk.CTkButton(
-        scroll, text="+ New playlist…", border_width=1, command=lambda: pick("new")
-    ).pack(fill="x", pady=10)
+    ctk.CTkButton(scroll, text="+ New playlist…", border_width=1, command=lambda: pick("new")).pack(
+        fill="x", pady=10
+    )
     ctk.CTkButton(scroll, text="Cancel", fg_color="transparent", command=top.destroy).pack(
         fill="x", pady=3
     )

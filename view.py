@@ -15,7 +15,6 @@ from components.SplashScreen import SplashScreen
 
 if TYPE_CHECKING:
     from controllers.main_controller import MainController as Controller
-
     from domain.entities import Playlist, Song
 
 
