@@ -63,6 +63,16 @@ def test_tagger_maps_metadata_with_fallbacks(tmp_path, monkeypatch):
     assert draft.duration == 185.7
 
 
+def _dummy_backend():
+    """Audio-free backend: PlayerService only needs on_end at construction."""
+
+    class DummyBackend:
+        def on_end(self, callback):
+            self.end_callback = callback
+
+    return DummyBackend()
+
+
 def test_container_builds_without_view_or_tk(tmp_path):
     from sqlmodel import SQLModel, create_engine
 
@@ -70,8 +80,9 @@ def test_container_builds_without_view_or_tk(tmp_path):
 
     engine = create_engine(f"sqlite:///{tmp_path}/c.db")
     SQLModel.metadata.create_all(engine)
-    container = build_container(view=None, engine=engine)
+    container = build_container(view=None, engine=engine, backend=_dummy_backend())
     assert container.library is not None
+    assert container.player is not None
     assert container.controller is None
     assert container.library.scan_folder("") == 0
 
@@ -84,7 +95,7 @@ def test_thin_controller_has_no_mainloop_side_effect(tmp_path):
 
     engine = create_engine(f"sqlite:///{tmp_path}/m.db")
     SQLModel.metadata.create_all(engine)
-    container = build_container(view=None, engine=engine)
+    container = build_container(view=None, engine=engine, backend=_dummy_backend())
 
     class FakeView:
         def __init__(self):
@@ -94,7 +105,7 @@ def test_thin_controller_has_no_mainloop_side_effect(tmp_path):
             self.looped = True
 
     view = FakeView()
-    controller = MainController(view=view, library=container.library)
+    controller = MainController(view=view, library=container.library, player=container.player)
     assert view.looped is False  # __init__ must not enter the loop
     controller.run()
     assert view.looped is True

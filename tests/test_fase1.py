@@ -52,6 +52,19 @@ class FakeLibrary:
         return True
 
 
+class FakePlayer:
+    """Minimal stand-in for PlayerService (playback not under test here)."""
+
+    def __init__(self):
+        self.subscribers = []
+
+    def subscribe(self, event, listener):
+        self.subscribers.append(listener)
+
+    def play_queue(self, songs, index=0):
+        return None
+
+
 class FakeView:
     """Records show_songs payloads and after() scheduling (no Tk)."""
 
@@ -80,14 +93,14 @@ def test_format_song_row_mapping():
 
 def test_refresh_pushes_songs_to_view():
     view, library = FakeView(), FakeLibrary(songs=[_song(1), _song(2)])
-    controller = MainController(view=view, library=library)
+    controller = MainController(view=view, library=library, player=FakePlayer())
     controller.refresh_library_view()
     assert [s.id for s in view.shown[0]] == [1, 2]
 
 
 def test_library_changed_event_marshals_through_after():
     view, library = FakeView(), FakeLibrary()
-    controller = MainController(view=view, library=library)
+    controller = MainController(view=view, library=library, player=FakePlayer())
     controller.bind()
     assert len(library.subscribers) == 1
 
@@ -105,7 +118,7 @@ def test_library_changed_event_marshals_through_after():
 
 def test_select_stub_handles_missing_song():
     view, library = FakeView(), FakeLibrary()
-    controller = MainController(view=view, library=library)
+    controller = MainController(view=view, library=library, player=FakePlayer())
     controller.handle_select_song(9999)  # must not raise
     controller.handle_select_song(1)  # empty library, still fine
 
