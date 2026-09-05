@@ -386,3 +386,39 @@ def test_mute_updates_view():
     controller.handle_select_song(1)
     controller.handle_mute()
     assert view.muted_states == [True]
+
+
+def test_service_shutdown_stops_and_clears():
+    service, _ = _service()
+    states = []
+    service.subscribe(STATE_CHANGED_EVENT, lambda playing=False, **kw: states.append(playing))
+    service.play_queue([_song(1)])
+    service.shutdown()
+    assert service.current is None
+    assert states[-1] is False
+
+
+def test_controller_shutdown_releases_and_destroys():
+    class ShutdownPlayer:
+        def __init__(self):
+            self.shutdowns = 0
+
+        def subscribe(self, event, listener):
+            pass
+
+        def shutdown(self):
+            self.shutdowns += 1
+
+    class DestroyView(FakePlayerView):
+        def __init__(self):
+            super().__init__()
+            self.destroyed = False
+
+        def destroy(self):
+            self.destroyed = True
+
+    view, player = DestroyView(), ShutdownPlayer()
+    controller = MainController(view=view, library=FakeLibrary(), player=player)
+    controller.shutdown()
+    assert player.shutdowns == 1
+    assert view.destroyed is True

@@ -124,6 +124,20 @@ class PlayerService:
         self._publish(STATE_CHANGED_EVENT, playing=self._backend.is_playing())
         return self._muted
 
+    def stop(self) -> None:
+        self._queue = []
+        self._index = 0
+        self._backend.stop()
+        self._publish(STATE_CHANGED_EVENT, playing=False)
+
+    def shutdown(self) -> None:
+        """Halt playback and release the backend. Called once on app exit,
+        before Tk teardown — never leave the device open for __del__."""
+        try:
+            self.stop()
+        finally:
+            self._backend.close()
+
     # -- internals --
 
     def _play_current(self) -> None:

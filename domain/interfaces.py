@@ -116,3 +116,8 @@ class PlayerBackend(ABC):
     def on_end(self, callback: Callable[[], None]) -> None:
         """Register a media-end callback (auto-next). No-op by default."""
         return None
+
+    def close(self) -> None:
+        """Release native resources. Called once on app shutdown, before
+        interpreter teardown — never rely on __del__ for audio devices."""
+        return None

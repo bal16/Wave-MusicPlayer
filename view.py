@@ -34,6 +34,8 @@ class View(ctk.CTk):
         ctk.set_appearance_mode("Dark")
         ctk.set_default_color_theme("dark-blue")
 
+        self.protocol("WM_DELETE_WINDOW", self._on_close)
+
         logger.info("View initialized")
 
     def set_controller(self, controller: Controller):
@@ -147,6 +149,12 @@ class View(ctk.CTk):
         self.player_bar.set_muted(muted)
 
     # -- Callbacks bound to the controller in set_controller() --
+
+    def _on_close(self) -> None:
+        if self.controller is not None:
+            self.controller.shutdown()
+        else:
+            self.destroy()
 
     def _on_add_folder(self, folder_path: str) -> None:
         if self.controller is None:

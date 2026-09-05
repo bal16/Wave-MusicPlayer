@@ -201,3 +201,17 @@ class VlcBackend(PlayerBackend):
 
     def on_end(self, callback) -> None:
         self._end_callback = callback
+
+    def close(self) -> None:
+        """Stop and release libvlc objects explicitly (idempotent)."""
+        self._disarm()
+        try:
+            self.stop()
+        except Exception as e:
+            logger.debug(f"VLC stop on close failed (ignored): {e}")
+        for obj in (getattr(self, "_player", None), getattr(self, "_instance", None)):
+            try:
+                if obj is not None:
+                    obj.release()
+            except Exception as e:
+                logger.debug(f"VLC release failed (ignored): {e}")

@@ -40,6 +40,20 @@ class MainController:
         logger.info("Application main loop has started")
         self.view.mainloop()
 
+    def shutdown(self) -> None:
+        """Stop playback, release audio, then destroy the window.
+
+        Bound to WM_DELETE_WINDOW so no device is left open for
+        interpreter-teardown __del__ (which deadlocks).
+        """
+        self._ticker_running = False
+        try:
+            self.player.shutdown()
+        except Exception as e:
+            logger.error(f"Error during player shutdown: {e}")
+        finally:
+            self.view.destroy()
+
     def bind(self) -> None:
         """Subscribe to backend events. Call once after set_controller()."""
         self.library.subscribe(self._on_library_changed)

@@ -207,6 +207,19 @@ class MiniaudioBackend(PlayerBackend):
         with self._lock:
             self.stop_locked()
 
+    def close(self) -> None:
+        """Shut the device down explicitly (idempotent).
+
+        Must run before interpreter teardown: PlaybackDevice.__del__
+        can deadlock when the device is still open at exit.
+        """
+        with self._lock:
+            self._playing = False
+            self._end_fired = True
+            self._stream_token = getattr(self, "_stream_token", 0) + 1
+            self._end_callback = None
+        self._close_device()
+
     def stop_locked(self) -> None:
         self._playing = False
         self._frames_played = 0
