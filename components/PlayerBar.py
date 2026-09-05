@@ -1,6 +1,7 @@
 from __future__ import annotations
 
-from typing import TYPE_CHECKING, Callable
+from collections.abc import Callable
+from typing import TYPE_CHECKING
 
 import customtkinter as ctk
 
@@ -28,17 +29,25 @@ class PlayerBar(ctk.CTkFrame):
         self._total = 0.0
         self._dragging = False
 
-        self.grid_columnconfigure(1, weight=1)  # center stretches
+        # Top-level grid: fixed sides, fluid center.
+        self.grid_columnconfigure(0, weight=0)
+        self.grid_columnconfigure(1, weight=1)
+        self.grid_columnconfigure(2, weight=0)
 
         # Left: album art + title
         self.album_frame = ctk.CTkFrame(self, fg_color="transparent")
-        self.album_frame.grid(row=0, column=0)
+        self.album_frame.grid(row=0, column=0, padx=(10, 0), sticky="ns")
 
-        # Album Art (placeholder until cover support lands post-MVP)
+        # Album Art (placeholder until cover support lands post-MVP).
+        # 60px keeps the bar at the 90px theme height.
         self.lbl_art = ctk.CTkLabel(
-            self.album_frame, text="[IMG]", width=100, height=100, fg_color="#333"
+            self.album_frame,
+            text="[IMG]",
+            width=60,
+            height=60,
+            fg_color=theme.colors.hover,
         )
-        self.lbl_art.grid(row=0, column=0, padx=20, pady=10)
+        self.lbl_art.grid(row=0, column=0, padx=10, pady=10)
 
         # Title & artist frame
         self.detail_frame = ctk.CTkFrame(self.album_frame, fg_color="transparent")
@@ -65,21 +74,23 @@ class PlayerBar(ctk.CTkFrame):
         )
         self.like_button.grid(row=0, column=2, padx=10)
 
-        # Center: controls
+        # Center: controls (stretches with the window)
         self.controls_frame = ctk.CTkFrame(self, fg_color="transparent")
-        self.controls_frame.grid(row=0, column=1)
+        self.controls_frame.grid(row=0, column=1, sticky="nsew")
 
-        # Slider progress frame
+        # Slider progress frame: fixed time labels, fluid slider.
         self.progress_frame = ctk.CTkFrame(self.controls_frame, fg_color="transparent")
-        self.progress_frame.pack(pady=5)
+        self.progress_frame.pack(fill="x", pady=5, padx=10)
+        self.progress_frame.grid_columnconfigure(0, weight=0)
+        self.progress_frame.grid_columnconfigure(1, weight=1)
+        self.progress_frame.grid_columnconfigure(2, weight=0)
 
         self.lbl_current_time = ctk.CTkLabel(self.progress_frame, text="0:00")
         self.lbl_current_time.grid(row=0, column=0, pady=5, padx=5)
 
-        # Progress slider (0.0 - 1.0 fraction of the track)
+        # Progress slider (0.0 - 1.0 fraction of the track, fluid width)
         self.slider = ctk.CTkSlider(
             self.progress_frame,
-            width=400,
             from_=0,
             to=1,
             progress_color=theme.colors.progress_fill,
@@ -87,7 +98,7 @@ class PlayerBar(ctk.CTkFrame):
             command=self._on_slider_move,
         )
         self.slider.set(0)
-        self.slider.grid(row=0, column=1, pady=5)
+        self.slider.grid(row=0, column=1, pady=5, sticky="ew")
         self.slider.bind("<ButtonPress-1>", self._on_slider_press)
         self.slider.bind("<ButtonRelease-1>", self._on_slider_release)
 
@@ -131,7 +142,7 @@ class PlayerBar(ctk.CTkFrame):
 
         # Right: volume frame
         self.volume_frame = ctk.CTkFrame(self, fg_color="transparent")
-        self.volume_frame.grid(row=0, column=2)
+        self.volume_frame.grid(row=0, column=2, padx=(0, 10), sticky="ns")
 
         # Loop button (non-functional until repeat is decided post-MVP).
         self.btn_loop = ctk.CTkButton(
