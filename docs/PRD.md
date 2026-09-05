@@ -16,7 +16,7 @@ Versi baru (root repo saat ini):
 - UI `customtkinter` gelap ala Spotify: `Sidebar` + `MainContent` + `PlayerBar` + `SplashScreen`.
 - Persistensi SQLite via `SQLModel` (`models/schema.py`, `models/database.py`).
 - Metadata via `TinyTag` (`controller.py: add_music_from_folder`).
-- Status `TODO.md`: **Add Folder → DB sudah jalan. List Songs sudah jalan (Fase 1, tanpa search). Play Songs belum.**
+- Status `TODO.md`: **Add Folder → DB sudah jalan. List Songs sudah jalan (Fase 1, tanpa search). Play Songs implementasi selesai, smoke test manual tertunda (Fase 2).**
 
 Dokumen ini mengunci scope agar List dan Play bisa diselesaikan tanpa redesign di tengah jalan.
 
@@ -44,11 +44,11 @@ Dokumen ini mengunci scope agar List dan Play bisa diselesaikan tanpa redesign d
 - Baca dari DB, render di `MainContent` via `set_songs()`, bukan dummy 9 lagu. Toggle `is_favorite` ter-wiring; search/filter box ditunda (service sudah mendukung `query`).
 - Acceptance: tambah folder → list refresh otomatis via event `library_changed` tanpa restart; render dibatasi 300 baris + label overflow (virtualisasi penuh backlog).
 
-### F3 — Play (BELUM)
+### F3 — Play (IMPLEMENTASI SELESAI, smoke test manual tertunda)
 
-- Klik lagu → play; prev/next, play/pause, seek slider, volume/mute, tampil judul/artis/durasi, auto-next saat lagu habis.
-- Acceptance: FLAC + MP3 wajib bunyi; seek akurat ±1 dtk; slider jalan 1 detik sekali via `after()`, bukan thread UI.
-- Backend: `python-vlc` sebagai primer — lihat keputusan di [Architecture §5](architecture.md#5-backend-audio-python-vlc-vs-alternatif).
+- Klik lagu → antrean = full library sesuai urutan tampil, mulai dari lagu diklik; prev/next, play/pause, seek slider, volume/mute, tampil judul/artis/durasi, auto-next dengan wrap ke lagu pertama.
+- Acceptance: FLAC + MP3 wajib bunyi; seek akurat ±1 dtk; slider jalan 1 detik sekali via `after()`, bukan thread UI. Lihat checklist di [Smoke Fase 2](smoke-fase2.md).
+- Backend: `python-vlc` primer + `miniaudio` fallback, keduanya diimplementasikan — lihat [Architecture §5](architecture.md#5-backend-audio-python-vlc-vs-alternatif).
 
 ### F4 — Playlist & Favorite (OPSIONAL, setelah F2+F3)
 
@@ -67,13 +67,13 @@ Dokumen ini mengunci scope agar List dan Play bisa diselesaikan tanpa redesign d
 
 ## 5. Out of scope eksplisit
 
-Shuffle/repeat gaya versi lama (random ±2 index — buggy), album-art blur background, multi-folder watch, drag-and-drop. Boleh masuk backlog pasca-MVP, bukan sekarang.
+Shuffle/repeat gaya versi lama (random ±2 index — buggy), album-art blur background, multi-folder watch, drag-and-drop. Boleh masuk backlog pasca-MVP, bukan sekarang. Tombol loop (🔁) di PlayerBar tampil tapi non-fungsional sampai repeat diputuskan pasca-MVP.
 
 ## 6. Roadmap bertahap (sesuai pilihan: migrasi bertahap, opsi A)
 
 1. **Fase 0 — Fondasi ✅ SELESAI:** `SongRepository` + `LibraryService` + `container.py`, `MainController` tipis (`run()` ganti `mainloop` di `__init__`), `model.py` dihapus, `views/theme.py` sebagai design system. UI tidak berubah; `models/` + `controller.py` lama tinggal sebagai shim.
 2. **Fase 1 — F2 List ✅ SELESAI:** `MainContent.set_songs()`, event `library_changed`, dummy dihapus, Sidebar pindah ke callback. Search box ditunda; render dibatasi 300 baris.
-3. **Fase 2 — F3 Play:** `PlayerBackend` ABC + implementasi VLC + `PlayerService`, wiring `PlayerBar`.
+3. **Fase 2 — F3 Play ✅ IMPLEMENTASI (smoke test manual tertunda):** `VlcBackend` + `MiniaudioBackend` + `PlayerService` (queue + wrap), wiring `PlayerBar`, ticker `after(1000)`.
 4. **Fase 3 — F4 Playlist:** UI playlist + CRUD link table.
 5. **Fase 4 — Polish:** worker-thread scan, lazy icon penuh, hapus `destroy()`-recreate frame. (Path absolut DB sudah selesai di Fase 0.)
 

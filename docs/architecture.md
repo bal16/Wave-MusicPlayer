@@ -139,7 +139,7 @@ controller.run()
 
 - **Add (PRD F1):** `Sidebar --on_add_folder--> Controller.handle_add_folder --scan (thread)--> LibraryService --publish library_changed--> EventBus --show_songs--> SongList`. Menggantikan `destroy()`-recreate.
 - **List (PRD F2):** `Controller.handle_show_music --list_songs--> LibraryService --list_all--> Repo --> SongList.set_songs()`. Sumber kebenaran = tabel `song` di [Schema §2](schema.md#2-tabel).
-- **Play (PRD F3):** `SongList --on_select(id)--> Controller --get_by_id--> Repo --play--> PlayerService --set_track/set_progress--> PlayerBar`. Posisi slider via `after(1000)`, event `media_end` → auto-next.
+- **Play (PRD F3):** `SongList --on_select(id)--> Controller --list_songs--> LibraryService` (antrean = full library sesuai urutan tampil, mulai dari lagu diklik) `--play_queue--> PlayerService --load/play--> PlayerBackend --set_track/set_progress--> PlayerBar`. Posisi slider via `after(1000)`, event `media_end` → auto-next dengan wrap ke lagu pertama. (Sumber antrean akan berevolusi saat search/playlist datang.)
 
 Aturan threading: TinyTag + VLC callback **tidak boleh** menyentuh widget langsung; selalu lewat `view.after(0, ...)` atau EventBus.
 
@@ -157,14 +157,16 @@ Jawaban atas pertanyaan: **ya, `python-vlc` pilihan yang tepat sebagai primer �
 
 Rekomendasi konkret:
 
-1. Definisikan `domain/interfaces.py::PlayerBackend` (`load/play/pause/seek/set_volume/get_pos/on_end`).
-2. Implementasi pertama `infrastructure/player_vlc.py`. Di `container.py`, deteksi libvlc saat startup: kalau gagal, fallback ke `player_miniaudio.py` + log warning + banner di UI ("VLC tidak ditemukan, mode kompatibilitas").
-3. Tambahkan ke `pyproject.toml` via `uv add`: `python-vlc` (wajib) + `miniaudio` atau `just_playback` (fallback). Jangan bawa `pygame` ke versi baru kecuali untuk transisi.
-4. `PlayerService` tidak tahu VLC; ia hanya tahu ABC → ganti backend tanpa ubah UI/controller.
+1. ✅ SELESAI — `domain/interfaces.py::PlayerBackend` (`load/play/pause/seek/set_volume/get_pos/on_end`) + `BackendUnavailableError`.
+2. ✅ SELESAI — `infrastructure/player_vlc.py` (primer) + `infrastructure/player_miniaudio.py` (fallback). `create_player_backend()` di `app/container.py`: VLC bila libvlc ada, miniaudio bila tidak + log warning + banner di UI ("VLC tidak ditemukan, mode kompatibilitas"). Override paksa via `WAVE_AUDIO_BACKEND=vlc|miniaudio`.
+3. ✅ SELESAI — `pyproject.toml`: `python-vlc` + `miniaudio` via `uv add`. `pygame` tidak dibawa ke versi baru.
+4. ✅ SELESAI — `PlayerService` hanya tahu ABC → ganti backend tanpa ubah UI/controller.
+
+Catatan kompatibilitas (terverifikasi): libvlc 4 menghapus event-manager API, media parsing, dan `media_player_stop`. `VlcBackend` memakai event bila ada, selebihnya polling-monitor + pause/rewind sebagai stop; durasi yang gagal dibaca VLC ditutup fallback metadata lagu. `python-vlc` vs snapshot libvlc 4.0-dev bisa abort di level C (tidak tertangkap `try`); bila VLC crash di mesinmu, paksa fallback via `WAVE_AUDIO_BACKEND=miniaudio`.
 
 ## 6. Langkah migrasi (tidak merusak yang jalan)
 
 1. ✅ SELESAI — Tambah `domain/`, `infrastructure/song_repository.py`, `services/library_service.py`, `app/container.py`; `mainloop` pindah ke `run()`; `model.py` dihapus. Plus: `views/theme.py` (design system) + `utils/icons.py` (cached loader).
 2. ✅ SELESAI — `init_db` dipanggil di `main.py`; DB path absolut (`data/app.db`, di-`gitignore`); `utils/icons` cached (lazy penuh saat refactor views).
-3. ⚠️ SEBAGIAN — `master.controller` diganti callback (`Sidebar.on_add_folder`, `MainContent.on_select/on_favorite`); `set_songs()` selesai. Tersisa untuk Fase 2: `PlayerBar` wiring ke `PlayerService`.
+3. ⚠️ SEBAGIAN — `master.controller` diganti callback (`Sidebar.on_add_folder`, `MainContent.on_select/on_favorite`); `set_songs()` selesai. `PlayerBar` sudah ter-wiring ke `PlayerService` (Fase 2); tersisa playlist (Fase 3).
 4. Hapus pola `destroy()`-recreate; ganti dengan update data + EventBus.
