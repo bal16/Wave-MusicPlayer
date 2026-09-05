@@ -1,0 +1,4 @@
+# Markdown lint — single source of truth shared by editors.
+# (Rules we hit and fixed stay enforced: MD038 no-space-in-code,
+# MD060 table-column-style. Only repo-wide exceptions live here.)
+MD013: false # long lines allowed (tables, flows, token lists)
