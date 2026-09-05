@@ -41,7 +41,7 @@ class FakeLibrary:
     def list_songs(self, query="", favorites_only=False):
         return list(self.songs)
 
-    def scan_folder(self, path):
+    def scan_folder(self, path, progress=None):
         self.scanned.append(path)
         return 0
 
