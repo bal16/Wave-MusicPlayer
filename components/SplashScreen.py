@@ -1,6 +1,7 @@
 import customtkinter as ctk
 
-from config import COLOR_ACCENT, COLOR_BG, ICON_LOGO_BOX
+from config import COLOR_ACCENT, COLOR_BG
+from utils.icons import get_logo_box
 
 
 class SplashScreen(ctk.CTkToplevel):
@@ -23,7 +24,7 @@ class SplashScreen(ctk.CTkToplevel):
         self.logo_frame = ctk.CTkFrame(self, fg_color="transparent", border_width=0)
         self.logo_frame.pack(expand=True, fill="both")
 
-        self.lbl_icon = ctk.CTkLabel(self.logo_frame, text="", image=ICON_LOGO_BOX)
+        self.lbl_icon = ctk.CTkLabel(self.logo_frame, text="", image=get_logo_box())
         self.lbl_icon.pack(pady=(80, 10))
 
         self.progress = ctk.CTkProgressBar(
