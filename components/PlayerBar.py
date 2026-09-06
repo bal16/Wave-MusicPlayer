@@ -99,8 +99,10 @@ class PlayerBar(ctk.CTkFrame):
         self.controls_frame.grid(row=0, column=1, sticky="nsew")
 
         # Slider progress frame: fixed time labels, fluid slider.
+        # Tight stack below (gap 4 to the transport keys); the top pad
+        # balances the leftover bar height so the block stays centered.
         self.progress_frame = ctk.CTkFrame(self.controls_frame, fg_color="transparent")
-        self.progress_frame.pack(fill="x", pady=5, padx=10)
+        self.progress_frame.pack(fill="x", pady=(10, 2), padx=10)
         self.progress_frame.grid_columnconfigure(0, weight=0)
         self.progress_frame.grid_columnconfigure(1, weight=1)
         self.progress_frame.grid_columnconfigure(2, weight=0)
@@ -108,7 +110,7 @@ class PlayerBar(ctk.CTkFrame):
         self.lbl_current_time = ctk.CTkLabel(
             self.progress_frame, text="0:00", width=44, anchor="center"
         )
-        self.lbl_current_time.grid(row=0, column=0, pady=5, padx=5)
+        self.lbl_current_time.grid(row=0, column=0, pady=2, padx=5)
 
         # Progress slider (0.0 - 1.0 fraction of the track, fluid width)
         self.slider = ctk.CTkSlider(
@@ -120,19 +122,19 @@ class PlayerBar(ctk.CTkFrame):
             command=self._on_slider_move,
         )
         self.slider.set(0)
-        self.slider.grid(row=0, column=1, pady=5, sticky="ew")
+        self.slider.grid(row=0, column=1, pady=2, sticky="ew")
         self.slider.bind("<ButtonPress-1>", self._on_slider_press)
         self.slider.bind("<ButtonRelease-1>", self._on_slider_release)
 
         self.lbl_total_time = ctk.CTkLabel(
             self.progress_frame, text="0:00", width=44, anchor="center"
         )
-        self.lbl_total_time.grid(row=0, column=2, pady=5, padx=5)
+        self.lbl_total_time.grid(row=0, column=2, pady=2, padx=5)
 
         # Buttons (Prev, Play, Next)
         # Use a dedicated row frame to avoid mixing pack/grid
         self.buttons_row = ctk.CTkFrame(self.controls_frame, fg_color="transparent")
-        self.buttons_row.pack(pady=5)
+        self.buttons_row.pack(pady=2)
 
         self.btn_prev = ctk.CTkButton(
             self.buttons_row,
