@@ -33,8 +33,8 @@ class TinyTagAudioTagger:
             return None
         try:
             tag = TinyTag.get(abs_path)
-        except Exception as e:
-            logger.error(f"Error reading tag {abs_path}: {e}")
+        except Exception:
+            logger.exception(f"Error reading tag {abs_path}")
             return None
         return SongDraft(
             title=tag.title or os.path.basename(abs_path),
@@ -54,7 +54,7 @@ class TinyTagAudioTagger:
             return None
         try:
             image = TinyTag.get(abs_path, image=True).images.any
-        except Exception as e:
-            logger.error(f"Error reading cover {abs_path}: {e}")
+        except Exception:
+            logger.exception(f"Error reading cover {abs_path}")
             return None
         return image.data if image is not None else None

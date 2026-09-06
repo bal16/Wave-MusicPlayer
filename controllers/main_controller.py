@@ -67,14 +67,15 @@ class MainController:
         for interpreter-teardown __del__ (which deadlocks).
         """
         self._ticker_running = False
+        logger.info("Shutting down")
         try:
             self.view.withdraw()
         except Exception:
             pass
         try:
             self.player.shutdown()
-        except Exception as e:
-            logger.error(f"Error during player shutdown: {e}")
+        except Exception:
+            logger.exception("Error during player shutdown")
         finally:
             try:
                 self.view.destroy()
@@ -122,6 +123,7 @@ class MainController:
         if not folder_path:
             return
         self._scanning = True
+        logger.info(f"Scanning folder {folder_path!r}")
         self.view.show_scan_started()
         thread = threading.Thread(target=self._scan_in_background, args=(folder_path,), daemon=True)
         thread.start()
@@ -130,7 +132,7 @@ class MainController:
         try:
             self.library.scan_folder(folder_path, progress=self._report_scan_progress)
         except Exception as e:
-            logger.error(f"Background scan failed: {e}")
+            logger.exception("Background scan failed")
             try:
                 self.view.after(0, self.view.show_scan_failed, str(e))
             except Exception:
@@ -157,7 +159,9 @@ class MainController:
         return self.library.list_songs(query=query, favorites_only=favorites_only)
 
     def handle_toggle_favorite(self, song_id: int) -> bool | None:
-        return self.library.toggle_favorite(song_id)
+        result = self.library.toggle_favorite(song_id)
+        logger.debug(f"Toggle favorite song {song_id} -> {result}")
+        return result
 
     # -- Playback handlers (Fase 2, F3 Play) --
 
@@ -165,6 +169,7 @@ class MainController:
         """Queue the current view's songs, start at the clicked song."""
         songs = self._current_songs()
         index = next((i for i, s in enumerate(songs) if s.id == song_id), 0)
+        logger.debug(f"Select song {song_id} at queue index {index}")
         song = self.player.play_queue(songs, index)
         if song is not None:
             self.view.show_track(song)
@@ -178,30 +183,36 @@ class MainController:
 
     def handle_play_pause(self) -> None:
         playing = self.player.play_pause()
+        logger.debug(f"Play/pause -> playing={playing}")
         self.view.set_playing(playing)
         self._ensure_ticker()
 
     def handle_next(self) -> None:
         song = self.player.next()
+        logger.debug(f"Next -> {song.id if song is not None else None}")
         if song is not None:
             self.view.show_track(song)
         self._ensure_ticker()
 
     def handle_prev(self) -> None:
         song = self.player.prev()
+        logger.debug(f"Prev -> {song.id if song is not None else None}")
         if song is not None:
             self.view.show_track(song)
         self._ensure_ticker()
 
     def handle_seek(self, seconds: float) -> None:
         pos = self.player.seek(seconds)
+        logger.debug(f"Seek -> {pos:.1f}s")
         self.view.set_progress(pos, self.player.get_duration())
 
     def handle_volume(self, level: float) -> None:
+        logger.debug(f"Volume -> {level:.2f}")
         self.player.set_volume(level)
 
     def handle_mute(self) -> None:
         muted = self.player.toggle_mute()
+        logger.debug(f"Mute -> {muted}")
         self.view.set_muted(muted)
 
     def handle_toggle_current_favorite(self) -> None:
@@ -217,16 +228,19 @@ class MainController:
     # -- Playlist handlers (Fase 3, F4 Playlist) --
 
     def handle_show_music(self) -> None:
+        logger.debug("Navigate -> library")
         self.current_view = VIEW_LIBRARY
         self.current_playlist_id = None
         self.refresh_library_view()
 
     def handle_show_playlists(self) -> None:
+        logger.debug("Navigate -> playlists")
         self.current_view = VIEW_PLAYLISTS
         self.current_playlist_id = None
         self.view.show_playlists(self.playlists.list_playlists())
 
     def handle_select_playlist(self, playlist_id: int) -> None:
+        logger.debug(f"Navigate -> playlist {playlist_id}")
         self.current_view = VIEW_PLAYLIST_DETAIL
         self.current_playlist_id = playlist_id
         self._show_playlist_detail(playlist_id)
@@ -252,10 +266,13 @@ class MainController:
         return deleted
 
     def handle_add_to_playlist(self, playlist_id: int, song_id: int) -> bool:
-        return self.playlists.add_song(playlist_id, song_id)
+        added = self.playlists.add_song(playlist_id, song_id)
+        logger.debug(f"Add song {song_id} to playlist {playlist_id} -> {added}")
+        return added
 
     def handle_remove_from_playlist(self, playlist_id: int, song_id: int) -> bool:
         removed = self.playlists.remove_song(playlist_id, song_id)
+        logger.debug(f"Remove song {song_id} from playlist {playlist_id} -> {removed}")
         if removed:
             self.refresh_current_view()
         return removed

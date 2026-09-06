@@ -128,8 +128,8 @@ class VlcBackend(PlayerBackend):
         if self._end_callback is not None:
             try:
                 self._end_callback()
-            except Exception as e:
-                logger.error(f"Error in media-end callback: {e}")
+            except Exception:
+                logger.exception("Error in media-end callback")
 
     def _disarm(self) -> None:
         self._expecting = False

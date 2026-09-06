@@ -181,8 +181,8 @@ class View(ctk.CTk):
         if self.controller is not None and song.id is not None:
             try:
                 cover = self.controller.handle_get_cover(song.id)
-            except Exception as e:
-                logger.warning(f"Cover load failed for song {song.id}: {e}")
+            except Exception:
+                logger.opt(exception=True).warning(f"Cover load failed for song {song.id}")
         self.player_bar.set_cover(song.id, cover)
 
     def set_progress(self, seconds: float, total: float) -> None:

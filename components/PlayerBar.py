@@ -4,6 +4,7 @@ from collections.abc import Callable
 from typing import TYPE_CHECKING
 
 import customtkinter as ctk
+from loguru import logger
 
 from utils.icons import (
     get_heart_filled,
@@ -275,6 +276,7 @@ class PlayerBar(ctk.CTkFrame):
             picture.thumbnail((120, 120))
             return ctk.CTkImage(light_image=picture, dark_image=picture, size=(60, 60))
         except Exception:
+            logger.debug("Cover bytes could not be decoded — using fallback art")
             return None
 
     # -- Slider interaction --

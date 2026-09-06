@@ -1,3 +1,6 @@
+import os
+import sys
+
 from loguru import logger
 
 from app.container import build_container
@@ -7,6 +10,10 @@ from view import View
 
 
 def main():
+    # stderr honors LOGURU_LEVEL (dev=DEBUG, start=INFO); the file log
+    # always keeps DEBUG for post-mortem diagnosis.
+    logger.remove()
+    logger.add(sys.stderr, level=os.getenv("LOGURU_LEVEL", "INFO"))
     logger.add("logs/app_history.log", rotation="1 MB", retention="10 days", level="DEBUG")
 
     logger.info("App Starting...")
@@ -31,9 +38,9 @@ def main():
         view.after(100, controller.refresh_library_view)
         controller.run()
 
-    except Exception as e:
-        logger.critical(f"App Crash! Error: {e}")
-        raise e
+    except Exception:
+        logger.exception("App crashed")
+        raise
 
 
 if __name__ == "__main__":

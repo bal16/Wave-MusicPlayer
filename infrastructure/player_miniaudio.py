@@ -142,8 +142,8 @@ class MiniaudioBackend(PlayerBackend):
     def _invoke_end_callback(self, callback) -> None:
         try:
             callback()
-        except Exception as e:
-            logger.error(f"Error in media-end callback: {e}")
+        except Exception:
+            logger.exception("Error in media-end callback")
 
     def _open_device(self) -> None:
         miniaudio = self._miniaudio
@@ -158,8 +158,8 @@ class MiniaudioBackend(PlayerBackend):
         if self._device is not None:
             try:
                 self._device.close()
-            except Exception as e:
-                logger.warning(f"Error closing audio device: {e}")
+            except Exception:
+                logger.exception("Error closing audio device")
             self._device = None
 
     def _start_stream(self, seek_frame: int) -> None:

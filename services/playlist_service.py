@@ -39,12 +39,14 @@ class PlaylistService:
     def rename_playlist(self, playlist_id: int, name: str) -> Playlist | None:
         playlist = self._repo.rename(playlist_id, name)
         if playlist is not None:
+            logger.info(f"Playlist renamed: {playlist.name}")
             self._changed()
         return playlist
 
     def delete_playlist(self, playlist_id: int) -> bool:
         deleted = self._repo.delete(playlist_id)
         if deleted:
+            logger.info(f"Playlist deleted: id={playlist_id}")
             self._changed()
         return deleted
 
@@ -57,12 +59,14 @@ class PlaylistService:
     def add_song(self, playlist_id: int, song_id: int) -> bool:
         added = self._repo.add_song(playlist_id, song_id)
         if added:
+            logger.debug(f"Playlist {playlist_id}: added song {song_id}")
             self._changed()
         return added
 
     def remove_song(self, playlist_id: int, song_id: int) -> bool:
         removed = self._repo.remove_song(playlist_id, song_id)
         if removed:
+            logger.debug(f"Playlist {playlist_id}: removed song {song_id}")
             self._changed()
         return removed
 
