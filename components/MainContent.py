@@ -17,6 +17,12 @@ if TYPE_CHECKING:
 # the overflow label tells the user the list is truncated, not empty.
 MAX_VISIBLE_ROWS = 300
 
+# Lists bigger than this render in slices via after() so boot (and any
+# full rebuild) never freezes the window on ~2000 widgets at once.
+# The empty-state label doubles as the "Loading… i/N" readout meanwhile.
+CHUNK_THRESHOLD = 80
+CHUNK_SIZE = 40
+
 HEART_ON = "♥"
 HEART_OFF = "♡"
 
@@ -177,17 +183,52 @@ class MainContent(ctk.CTkFrame):
         self._clear_rows()
         visible = songs[:MAX_VISIBLE_ROWS]
 
-        if visible:
-            self.lbl_empty.pack_forget()
-        else:
+        if not visible:
+            self.lbl_empty.configure(text="No songs yet — Add a folder to start")
             self.lbl_empty.pack(fill="x", pady=20)
+            self.lbl_overflow.pack_forget()
+            return
 
-        for idx, song in enumerate(visible, start=1):
-            self.create_song_row(idx, song)
+        self.lbl_empty.pack_forget()
+        if len(visible) > CHUNK_THRESHOLD:
+            self._render_chunked(visible)
+        else:
+            for idx, song in enumerate(visible, start=1):
+                self.create_song_row(idx, song)
+            self._finish_overflow(len(songs))
 
-        if len(songs) > MAX_VISIBLE_ROWS:
+    def _render_chunked(self, visible: list[Song]) -> None:
+        """Render big lists in slices so the window stays responsive.
+
+        Progress is shown in place ("Loading… i/N"); each slice yields
+        to the event loop via after(). A TclError means the window was
+        closed mid-load — just stop.
+        """
+        self.lbl_empty.configure(text=f"Loading… 0/{len(visible)}")
+        self.lbl_empty.pack(fill="x", pady=20)
+        state = {"done": 0}
+
+        def _batch() -> None:
+            try:
+                end = min(state["done"] + CHUNK_SIZE, len(visible))
+                for j in range(state["done"], end):
+                    self.create_song_row(j + 1, visible[j])
+                state["done"] = end
+                if end < len(visible):
+                    self.lbl_empty.configure(text=f"Loading… {end}/{len(visible)}")
+                    self.after(1, _batch)
+                else:
+                    self.lbl_empty.pack_forget()
+                    self._finish_overflow(len(visible))
+            except tk.TclError:
+                pass
+
+        self.after(1, _batch)
+
+    def _finish_overflow(self, total: int) -> None:
+        if total > MAX_VISIBLE_ROWS:
             self.lbl_overflow.configure(
-                text=f"…and {len(songs) - MAX_VISIBLE_ROWS} more (showing first {MAX_VISIBLE_ROWS})"
+                text=f"…and {total - MAX_VISIBLE_ROWS} more (showing first {MAX_VISIBLE_ROWS})"
             )
             self.lbl_overflow.pack(fill="x", pady=10)
         else:

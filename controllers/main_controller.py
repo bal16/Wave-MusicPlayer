@@ -61,16 +61,25 @@ class MainController:
     def shutdown(self) -> None:
         """Stop playback, release audio, then destroy the window.
 
-        Bound to WM_DELETE_WINDOW so no device is left open for
-        interpreter-teardown __del__ (which deadlocks).
+        The window is withdrawn FIRST so close feels instant; teardown
+        (audio release + destroying ~2000 row widgets) continues
+        off-screen. Bound to WM_DELETE_WINDOW so no device is left open
+        for interpreter-teardown __del__ (which deadlocks).
         """
         self._ticker_running = False
+        try:
+            self.view.withdraw()
+        except Exception:
+            pass
         try:
             self.player.shutdown()
         except Exception as e:
             logger.error(f"Error during player shutdown: {e}")
         finally:
-            self.view.destroy()
+            try:
+                self.view.destroy()
+            except Exception as e:
+                logger.debug(f"View destroy failed (ignored): {e}")
 
     def bind(self) -> None:
         """Subscribe to backend events. Call once after set_controller()."""
@@ -122,16 +131,27 @@ class MainController:
             self.library.scan_folder(folder_path, progress=self._report_scan_progress)
         except Exception as e:
             logger.error(f"Background scan failed: {e}")
-            self.view.after(0, self.view.show_scan_failed, str(e))
+            try:
+                self.view.after(0, self.view.show_scan_failed, str(e))
+            except Exception:
+                pass
         finally:
             self._scanning = False
             # Scheduled after the refresh (publish happens before this),
             # so the dialog closes on completion even with zero new songs.
-            self.view.after(0, self.view.show_scan_finished)
+            # Guarded: the window may already be gone at exit.
+            try:
+                self.view.after(0, self.view.show_scan_finished)
+            except Exception:
+                pass
 
     def _report_scan_progress(self, done: int, total: int) -> None:
-        # Runs on the worker thread — marshal to the UI thread.
-        self.view.after(0, self.view.show_scan_progress, done, total)
+        # Runs on the worker thread — marshal to the UI thread. Guarded:
+        # at exit the window may already be gone.
+        try:
+            self.view.after(0, self.view.show_scan_progress, done, total)
+        except Exception:
+            pass
 
     def handle_list_songs(self, query: str = "", favorites_only: bool = False):
         return self.library.list_songs(query=query, favorites_only=favorites_only)
@@ -279,6 +299,18 @@ class MainController:
         self.view.after(TICK_MS, self._tick)
 
     def _tick(self) -> None:
+        # Headless test fakes have no winfo_exists — assume alive (old
+        # behavior); real Tk views report False once destroyed.
+        winfo_exists = getattr(self.view, "winfo_exists", None)
+        if callable(winfo_exists):
+            try:
+                alive = bool(winfo_exists())
+            except Exception:
+                alive = False
+            if not alive:
+                # Window gone (mid-shutdown): stop the chain, never touch widgets.
+                self._ticker_running = False
+                return
         if self.player.current is None or not self.player.is_playing:
             self._ticker_running = False
             return
