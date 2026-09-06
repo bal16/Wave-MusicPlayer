@@ -5,6 +5,7 @@ from typing import TYPE_CHECKING
 
 import customtkinter as ctk
 
+from components.scroll_helper import register_scrollable_frame
 from views.theme import theme
 
 if TYPE_CHECKING:
@@ -38,6 +39,8 @@ class PlaylistOverview(ctk.CTkFrame):
 
         self.scroll_frame = ctk.CTkScrollableFrame(self, fg_color="transparent")
         self.scroll_frame.pack(fill="both", expand=True, padx=20)
+        # Same keyboard navigation registry as the song list (see scroll_helper).
+        register_scrollable_frame(self.scroll_frame)
 
         self.lbl_empty = ctk.CTkLabel(
             self.scroll_frame,

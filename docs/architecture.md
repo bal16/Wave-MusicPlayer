@@ -93,6 +93,7 @@ classDiagram
   class SongList {
     +set_songs(songs)
     +update_song(song) : bool
+    +set_playing(song_id) : bool
     +on_select: Callable
     +on_favorite: Callable
     +on_add_to_playlist: Callable
@@ -179,8 +180,9 @@ controller.run()
 ## 4. Alur use-case
 
 - **Add (PRD F1):** `Sidebar --on_add_folder--> Controller.handle_add_folder --scan (thread)--> LibraryService --publish library_changed--> EventBus --show_songs--> SongList`. Menggantikan `destroy()`-recreate.
-- **List (PRD F2):** `Controller.handle_show_music --list_songs--> LibraryService --list_all--> Repo --> SongList.set_songs()`. Sumber kebenaran = tabel `song` di [Schema §2](schema.md#2-tabel).
+- **List (PRD F2):** `Controller.handle_show_music --list_songs--> LibraryService --list_all--> Repo --> SongList.set_songs()`. Sumber kebenaran = tabel `song` di [Schema §2](schema.md#2-tabel). Header sticky di luar scroll area; row grid kolom tetap.
 - **Favorite (ADR-0001):** `SongList --on_favorite(id)--> View._on_favorite_song --toggle + get_song--> LibraryService --update_song--> SongList` (fast-path O(1) via `_row_by_id`; miss → `refresh_current_view()` penuh; `PlayerBar.set_favorite()` ikut sync bila lagu sedang diputar).
+- **Scroll + highlight (ADR-0002, lokal):** gesture touchpad tiba sebagai Button-4/5 normal (terverifikasi via probe) → tiap widget row punya binding wheel eksplisit tepat-sekali (`components/scroll_helper.py`, dipakai song list & playlist overview; keyboard Up/Down/PgUp/PgDn/Home/End). Highlight lagu aktif via `SongList.set_playing()` dari `View.show_track()` (mencakup select/next/prev/auto-next).
 - **Play (PRD F3):** `SongList --on_select(id)--> Controller --songs--> Service --play_queue--> PlayerService --load/play--> PlayerBackend --set_track/set_progress--> PlayerBar`. Songs = `library.list_songs` atau `playlists.songs_in_playlist` sesuai view aktif. Posisi slider via `after(1000)`, event `media_end` → auto-next dengan wrap ke lagu pertama.
 
 Aturan threading: TinyTag + VLC callback **tidak boleh** menyentuh widget langsung; selalu lewat `view.after(0, ...)` atau EventBus.

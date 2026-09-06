@@ -6,14 +6,18 @@ from typing import TYPE_CHECKING
 import customtkinter as ctk
 
 from utils.icons import (
+    get_heart_filled,
+    get_heart_outline,
     get_muted,
+    get_next_button,
     get_notmuted,
     get_now_playing,
     get_pause_button,
     get_play_button,
+    get_prev_button,
     get_repeat,
 )
-from views.theme import format_duration, theme
+from views.theme import format_duration, theme, truncate_text
 
 if TYPE_CHECKING:
     from domain.entities import Song
@@ -58,25 +62,32 @@ class PlayerBar(ctk.CTkFrame):
         )
         self.lbl_art.grid(row=0, column=0, padx=10, pady=10)
 
-        # Title & artist frame
+        # Title & artist frame (fixed width so track changes never shift
+        # the layout; long text is truncated with an ellipsis in set_track).
         self.detail_frame = ctk.CTkFrame(self.album_frame, fg_color="transparent")
         self.detail_frame.grid(row=0, column=1, pady=20)
 
         self.lbl_song_title = ctk.CTkLabel(
-            self.detail_frame, text="Song Title", font=theme.fonts.body
+            self.detail_frame, text="Song Title", font=theme.fonts.body, width=200, anchor="w"
         )
         self.lbl_song_title.pack(pady=0, anchor="w")
         self.lbl_song_artist = ctk.CTkLabel(
-            self.detail_frame, text="Artist Name", text_color=theme.colors.text_muted
+            self.detail_frame,
+            text="Artist Name",
+            text_color=theme.colors.text_muted,
+            width=200,
+            anchor="w",
         )
         self.lbl_song_artist.pack(pady=0, anchor="w")
 
-        # Favorite button for the current track
+        # Favorite button for the current track (40px to match transport keys).
         self.like_button = ctk.CTkButton(
             self.album_frame,
-            text="♡",
-            width=30,
+            text="",
+            image=get_heart_outline(22),
+            width=40,
             fg_color="transparent",
+            hover_color=theme.colors.surface,
             text_color=theme.colors.text_muted,
             border_width=0,
             command=self._emit_favorite,
@@ -94,7 +105,9 @@ class PlayerBar(ctk.CTkFrame):
         self.progress_frame.grid_columnconfigure(1, weight=1)
         self.progress_frame.grid_columnconfigure(2, weight=0)
 
-        self.lbl_current_time = ctk.CTkLabel(self.progress_frame, text="0:00")
+        self.lbl_current_time = ctk.CTkLabel(
+            self.progress_frame, text="0:00", width=44, anchor="center"
+        )
         self.lbl_current_time.grid(row=0, column=0, pady=5, padx=5)
 
         # Progress slider (0.0 - 1.0 fraction of the track, fluid width)
@@ -111,7 +124,9 @@ class PlayerBar(ctk.CTkFrame):
         self.slider.bind("<ButtonPress-1>", self._on_slider_press)
         self.slider.bind("<ButtonRelease-1>", self._on_slider_release)
 
-        self.lbl_total_time = ctk.CTkLabel(self.progress_frame, text="0:00")
+        self.lbl_total_time = ctk.CTkLabel(
+            self.progress_frame, text="0:00", width=44, anchor="center"
+        )
         self.lbl_total_time.grid(row=0, column=2, pady=5, padx=5)
 
         # Buttons (Prev, Play, Next)
@@ -121,10 +136,12 @@ class PlayerBar(ctk.CTkFrame):
 
         self.btn_prev = ctk.CTkButton(
             self.buttons_row,
-            text="<<",
+            text="",
+            image=get_prev_button(),
             width=40,
             fg_color="transparent",
-            border_width=1,
+            border_width=0,
+            hover_color=theme.colors.surface,
             command=self._emit_prev,
         )
         self.btn_prev.pack(side="left", padx=5)
@@ -141,17 +158,19 @@ class PlayerBar(ctk.CTkFrame):
         self.btn_play.pack(side="left", padx=5)
         self.btn_next = ctk.CTkButton(
             self.buttons_row,
-            text=">>",
+            text="",
+            image=get_next_button(),
             width=40,
             fg_color="transparent",
-            border_width=1,
+            border_width=0,
+            hover_color=theme.colors.surface,
             command=self._emit_next,
         )
         self.btn_next.pack(side="left", padx=5)
 
         # Right: volume frame
         self.volume_frame = ctk.CTkFrame(self, fg_color="transparent")
-        self.volume_frame.grid(row=0, column=2, padx=(0, 10), sticky="ns")
+        self.volume_frame.grid(row=0, column=2, padx=(0, 20), sticky="ns")
 
         # Loop button (non-functional until repeat is decided post-MVP).
         self.btn_loop = ctk.CTkButton(
@@ -196,8 +215,8 @@ class PlayerBar(ctk.CTkFrame):
 
     def set_track(self, song: Song) -> None:
         """Show track metadata and reset progress."""
-        self.lbl_song_title.configure(text=song.title)
-        self.lbl_song_artist.configure(text=song.artist)
+        self.lbl_song_title.configure(text=truncate_text(song.title))
+        self.lbl_song_artist.configure(text=truncate_text(song.artist))
         self._total = float(song.duration or 0.0)
         self.lbl_total_time.configure(text=format_duration(self._total))
         self.set_favorite(song.is_favorite)
@@ -219,7 +238,8 @@ class PlayerBar(ctk.CTkFrame):
         self.btn_volume.configure(image=get_muted() if muted else get_notmuted())
 
     def set_favorite(self, is_favorite: bool) -> None:
-        self.like_button.configure(text="♥" if is_favorite else "♡")
+        icon = get_heart_filled(22) if is_favorite else get_heart_outline(22)
+        self.like_button.configure(image=icon)
 
     def set_cover(self, song_id: int | None, data: bytes | None) -> None:
         """Show embedded cover art, bundled fallback, or text placeholder.

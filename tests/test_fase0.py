@@ -9,7 +9,7 @@ from infrastructure.audio_tagger import (
     is_supported,
     normalize_path,
 )
-from views.theme import format_duration, theme
+from views.theme import format_duration, theme, truncate_text
 
 
 def test_supported_formats_locked_to_mp3_flac():
@@ -121,3 +121,12 @@ def test_theme_tokens_and_duration_format():
     assert theme.fonts.sans == "Arial"
     assert format_duration(225.9) == "3:45"
     assert format_duration(0) == "0:00"
+
+
+def test_truncate_text_keeps_short_text():
+    assert truncate_text("Fortnight") == "Fortnight"
+    assert truncate_text("x" * 24) == "x" * 24
+    assert truncate_text("") == ""
+    long_title = "Asma Allah Alhusna (The 99 Names of Allah)"
+    assert truncate_text(long_title) == long_title[:23] + "…"
+    assert len(truncate_text(long_title)) == 24

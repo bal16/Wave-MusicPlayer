@@ -35,6 +35,14 @@ def get_pause_button():
     return load_icon("pause", 32, 32)
 
 
+def get_next_button():
+    return load_icon("next", 32, 32)
+
+
+def get_prev_button():
+    return load_icon("prev", 32, 32)
+
+
 def get_now_playing(size: int = 60):
     return load_icon("now_playing", size, size)
 
@@ -49,6 +57,14 @@ def get_notmuted():
 
 def get_repeat():
     return load_icon("repeat", 20, 20)
+
+
+def get_heart_outline(size: int = 20):
+    return load_icon("heart_outline", size, size)
+
+
+def get_heart_filled(size: int = 20):
+    return load_icon("heart_filled", size, size)
 
 
 def get_folder():

@@ -132,8 +132,8 @@ class View(ctk.CTk):
         """Render songs in place (no frame recreate)."""
         self.playlist_view.grid_remove()
         self.main_area.grid(row=0, column=1, sticky="nsew", padx=0, pady=0)
-        self.main_area.set_header("All Musics")
-        self.main_area.set_songs(songs)
+        self.main_area.set_header("All Music")
+        self.main_area.set_songs(songs, playing_id=self._current_song_id())
 
     def show_playlists(self, playlists: list[Playlist]) -> None:
         """Render the playlist overview in the main cell."""
@@ -146,12 +146,37 @@ class View(ctk.CTk):
         self.playlist_view.grid_remove()
         self.main_area.grid(row=0, column=1, sticky="nsew", padx=0, pady=0)
         self.main_area.set_header(playlist.name)
-        self.main_area.set_songs(songs, allow_remove=True)
+        self.main_area.set_songs(songs, allow_remove=True, playing_id=self._current_song_id())
+
+    def _current_song_id(self) -> int | None:
+        """Id of the track in the player, if any (drives row highlight)."""
+        current = getattr(getattr(self.controller, "player", None), "current", None)
+        return getattr(current, "id", None)
+
+    def refresh_song_row(self, song: Song) -> None:
+        """Fast-path single-row update (no list rebuild, no scroll reset).
+
+        Updates the rendered row in place and syncs the player-bar heart
+        when the song is the current track. Falls back to a full refresh
+        when the row is not currently rendered.
+        """
+        try:
+            hit = self.main_area.update_song(song)
+        except AttributeError:
+            hit = False
+        if not hit:
+            if self.controller is not None:
+                self.controller.refresh_current_view()
+            return
+        if song.id is not None and self._current_song_id() == song.id:
+            self.player_bar.set_favorite(song.is_favorite)
 
     def show_track(self, song: Song) -> None:
-        """Display the current track in the player bar."""
+        """Display the current track in the player bar and the song list."""
         self.player_bar.set_track(song)
         self.player_bar.set_playing(True)
+        if song.id is not None:
+            self.main_area.set_playing(song.id)
         cover = None
         if self.controller is not None and song.id is not None:
             try:
@@ -238,13 +263,7 @@ class View(ctk.CTk):
         if updated is None:
             self.controller.refresh_current_view()
             return
-        hit = self.main_area.update_song(updated)
-        if not hit:
-            self.controller.refresh_current_view()
-            return
-        current = getattr(getattr(self.controller, "player", None), "current", None)
-        if current is not None and getattr(current, "id", None) == song_id:
-            self.player_bar.set_favorite(updated.is_favorite)
+        self.refresh_song_row(updated)
 
     def _on_navigate(self, target: str) -> None:
         if self.controller is None:

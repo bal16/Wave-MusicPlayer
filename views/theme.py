@@ -43,6 +43,7 @@ class Fonts:
     body: tuple = ("Arial", 14)
     menu: tuple = ("Arial", 16)
     small_muted: tuple = ("Arial", 12)
+    like_button: tuple = ("Arial", 20)
 
 
 @dataclass(frozen=True, slots=True)
@@ -73,6 +74,18 @@ def format_duration(seconds: float) -> str:
     """Format seconds as m:ss for views (DB keeps float seconds)."""
     total = max(0, int(seconds or 0))
     return f"{total // 60}:{total % 60:02d}"
+
+
+def truncate_text(text: str, max_chars: int = 24) -> str:
+    """Shorten text with an ellipsis so fixed-width labels never resize.
+
+    Pure (Tk-free) so it stays unit-testable; views apply it before
+    configuring labels (e.g. PlayerBar track detail).
+    """
+    text = text or ""
+    if len(text) <= max_chars:
+        return text
+    return text[: max(max_chars - 1, 0)] + "…"
 
 
 def apply_dark_mode() -> None:

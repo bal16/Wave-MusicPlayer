@@ -185,14 +185,14 @@ class MainController:
         self.view.set_muted(muted)
 
     def handle_toggle_current_favorite(self) -> None:
+        """Toggle love for the playing track without rebuilding the list."""
         song = self.player.current
         if song is None or song.id is None:
             return
         self.library.toggle_favorite(song.id)
-        self.refresh_library_view()
         updated = self.library.get_song(song.id)
         if updated is not None:
-            self.view.show_track(updated)
+            self.view.refresh_song_row(updated)
 
     # -- Playlist handlers (Fase 3, F4 Playlist) --
 
