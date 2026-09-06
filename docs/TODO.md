@@ -19,3 +19,4 @@
 - [x] POLISH (FASE 4)
   - [x] Worker-thread scan + progress
   - [x] Lazy icons, no destroy-recreate
+  - [x] Favorite fast-path by-ID without full rebuild (ADR-0001)

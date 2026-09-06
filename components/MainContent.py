@@ -69,6 +69,7 @@ class MainContent(ctk.CTkFrame):
         )
 
         self._rows: list[ctk.CTkFrame] = []
+        self._row_by_id: dict[int, dict] = {}
         self._allow_remove = False
 
     def set_header(self, title: str) -> None:
@@ -105,7 +106,26 @@ class MainContent(ctk.CTkFrame):
         for row in self._rows:
             row.destroy()
         self._rows = []
+        self._row_by_id = {}
         self.lbl_overflow.pack_forget()
+
+    def update_song(self, song: Song) -> bool:
+        """Update one rendered row in place (no destroy/recreate).
+
+        Returns True on fast-path hit, False when the caller should
+        fall back to a full refresh (song not currently rendered).
+        """
+        if song.id is None:
+            return False
+        refs = self._row_by_id.get(song.id)
+        if refs is None:
+            return False
+        display = format_song_row(song)
+        refs["lbl_title"].configure(text=display["title"])
+        refs["lbl_artist"].configure(text=display["artist"])
+        refs["lbl_duration"].configure(text=display["duration"])
+        refs["btn_fav"].configure(text=display["favorite_mark"])
+        return True
 
     def create_song_row(self, idx: int, song: Song) -> ctk.CTkFrame:
         display = format_song_row(song)
@@ -115,13 +135,12 @@ class MainContent(ctk.CTkFrame):
         ctk.CTkLabel(row, text=str(idx), width=30, text_color=theme.colors.text_muted).pack(
             side="left", padx=10
         )
-        ctk.CTkLabel(row, text=display["title"], font=theme.fonts.row_title).pack(
-            side="left", padx=10
-        )
-        ctk.CTkLabel(row, text=display["artist"], text_color=theme.colors.text_muted).pack(
-            side="left"
-        )
-        ctk.CTkLabel(row, text=display["duration"], width=50).pack(side="right", padx=20)
+        lbl_title = ctk.CTkLabel(row, text=display["title"], font=theme.fonts.row_title)
+        lbl_title.pack(side="left", padx=10)
+        lbl_artist = ctk.CTkLabel(row, text=display["artist"], text_color=theme.colors.text_muted)
+        lbl_artist.pack(side="left")
+        lbl_duration = ctk.CTkLabel(row, text=display["duration"], width=50)
+        lbl_duration.pack(side="right", padx=20)
 
         # Favorite toggle for this song.
         btn_fav = ctk.CTkButton(
@@ -159,6 +178,14 @@ class MainContent(ctk.CTkFrame):
         row.bind("<Button-1>", lambda _e, song_id=song.id: self._emit_select(song_id))
 
         self._rows.append(row)
+        if song.id is not None:
+            self._row_by_id[song.id] = {
+                "frame": row,
+                "lbl_title": lbl_title,
+                "lbl_artist": lbl_artist,
+                "lbl_duration": lbl_duration,
+                "btn_fav": btn_fav,
+            }
         return row
 
     def _emit_select(self, song_id: int | None) -> None:

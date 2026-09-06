@@ -9,7 +9,7 @@ The UI is a dark CustomTkinter window: a sidebar for navigation, a song list in 
 All MVP phases are done and covered by 75 tests plus a manual smoke checklist:
 
 - [x] Add folder → recursive `.mp3`/`.flac` scan on a worker thread with a progress dialog, tags stored in `data/app.db` (skips duplicates by path)
-- [x] List library → rendered from the DB, auto-refreshes on change, favorite toggle, search deferred
+- [x] List library → rendered from the DB, auto-refreshes on change, favorite toggle via row-level `update_song()` fast-path (ADR-0001), search deferred
 - [x] Playback → VLC primary with miniaudio fallback (auto-detected, overridable via `WAVE_AUDIO_BACKEND`); full-library queue with wrap-around; seek, volume, mute; embedded cover art with bundled fallback
 - [x] Playlist → create/rename/delete, add songs from any row, remove without touching the library; playback queues the open view
 - [x] Polish → threaded scan, lazy icons, no destroy-recreate refreshes, close always terminates
@@ -65,7 +65,7 @@ docs/                 # PRD, architecture, DB schema, style guide, smoke list, T
 __old/                # legacy Tkinter/pygame OOP project, kept for reference (see __old/README.md)
 ```
 
-`docs/` holds six cross-linked files: `PRD.md` (scope and roadmap), `architecture.md` (layered design, audio backend decision), `schema.md` (tables and query rules), `style-guide.md` (design tokens and UI rules), `smoke-fase2.md` (manual playback checklist), `TODO.md` (feature checklist).
+`docs/` holds the PRD, architecture, DB schema, style guide, smoke list, TODO, plus `adr/` (decision records, e.g. ADR-0001 row-level song update).
 
 ## Build a binary
 

@@ -12,3 +12,6 @@ dist/
 .env.*
 
 .idea/
+
+# Local decision records (not committed by design)
+docs/adr/

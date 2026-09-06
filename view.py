@@ -231,9 +231,20 @@ class View(ctk.CTk):
             self.controller.handle_select_song(song_id)
 
     def _on_favorite_song(self, song_id: int) -> None:
-        if self.controller is not None:
-            self.controller.handle_toggle_favorite(song_id)
+        if self.controller is None:
+            return
+        self.controller.handle_toggle_favorite(song_id)
+        updated = self.controller.handle_get_song(song_id)
+        if updated is None:
             self.controller.refresh_current_view()
+            return
+        hit = self.main_area.update_song(updated)
+        if not hit:
+            self.controller.refresh_current_view()
+            return
+        current = getattr(getattr(self.controller, "player", None), "current", None)
+        if current is not None and getattr(current, "id", None) == song_id:
+            self.player_bar.set_favorite(updated.is_favorite)
 
     def _on_navigate(self, target: str) -> None:
         if self.controller is None:

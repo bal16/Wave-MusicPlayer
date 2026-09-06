@@ -92,6 +92,7 @@ classDiagram
   }
   class SongList {
     +set_songs(songs)
+    +update_song(song) : bool
     +on_select: Callable
     +on_favorite: Callable
     +on_add_to_playlist: Callable
@@ -179,6 +180,7 @@ controller.run()
 
 - **Add (PRD F1):** `Sidebar --on_add_folder--> Controller.handle_add_folder --scan (thread)--> LibraryService --publish library_changed--> EventBus --show_songs--> SongList`. Menggantikan `destroy()`-recreate.
 - **List (PRD F2):** `Controller.handle_show_music --list_songs--> LibraryService --list_all--> Repo --> SongList.set_songs()`. Sumber kebenaran = tabel `song` di [Schema §2](schema.md#2-tabel).
+- **Favorite (ADR-0001):** `SongList --on_favorite(id)--> View._on_favorite_song --toggle + get_song--> LibraryService --update_song--> SongList` (fast-path O(1) via `_row_by_id`; miss → `refresh_current_view()` penuh; `PlayerBar.set_favorite()` ikut sync bila lagu sedang diputar).
 - **Play (PRD F3):** `SongList --on_select(id)--> Controller --songs--> Service --play_queue--> PlayerService --load/play--> PlayerBackend --set_track/set_progress--> PlayerBar`. Songs = `library.list_songs` atau `playlists.songs_in_playlist` sesuai view aktif. Posisi slider via `after(1000)`, event `media_end` → auto-next dengan wrap ke lagu pertama.
 
 Aturan threading: TinyTag + VLC callback **tidak boleh** menyentuh widget langsung; selalu lewat `view.after(0, ...)` atau EventBus.
@@ -209,4 +211,4 @@ Catatan kompatibilitas (terverifikasi): libvlc 4 menghapus event-manager API, me
 1. ✅ SELESAI — Tambah `domain/`, `infrastructure/song_repository.py`, `services/library_service.py`, `app/container.py`; `mainloop` pindah ke `run()`; `model.py` dihapus. Plus: `views/theme.py` (design system) + `utils/icons.py` (cached loader).
 2. ✅ SELESAI — `init_db` dipanggil di `main.py`; DB path absolut (`data/app.db`, di-`gitignore`); `utils/icons` cached (lazy penuh saat refactor views).
 3. ✅ SELESAI — `master.controller` diganti callback (`Sidebar.on_add_folder/on_navigate`, `MainContent.on_select/on_favorite`, `PlayerBar.on_*`); `set_songs()` selesai. `PlayerBar` ter-wiring ke `PlayerService` (Fase 2); playlist overview selesai (Fase 3). Shim terakhir pensiun: `controller.py`, `models/`, `config.py` dihapus.
-4. ✅ SELESAI — Pola `destroy()`-recreate dihapus (`refresh_song_list`, `change_main_content`); update data in-place + EventBus. Row-level `destroy` di `_clear_rows` adalah daur-ulang normal, dipertahankan.
+4. ✅ SELESAI — Pola `destroy()`-recreate dihapus (`refresh_song_list`, `change_main_content`); update data in-place + EventBus. Row-level `destroy` di `_clear_rows` adalah daur-ulang normal, dipertahankan. Toggle favorit memakai fast-path `MainContent.update_song()` by-ID via `_row_by_id` (ADR-0001); full `set_songs()` hanya untuk scan/filter/sort/pindah view.
