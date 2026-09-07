@@ -7,7 +7,8 @@ from controllers.main_controller import MainController
 from domain.entities import Song
 from domain.interfaces import EventBus
 from services.library_service import LibraryService
-from views.widgets.MainContent import MAX_VISIBLE_ROWS, format_song_row
+from views.widgets.MainContent import MAX_VISIBLE_ROWS
+from views.widgets.song_row import format_song_row
 
 
 def _song(song_id, **kw):
