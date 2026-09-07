@@ -7,12 +7,12 @@ import customtkinter as ctk
 from loguru import logger
 
 from views.widgets.dialogs import ask_text, choose_playlist, confirm
-from views.widgets.MainContent import MainContent
-from views.widgets.PlayerBar import PlayerBar
-from views.widgets.PlaylistOverview import PlaylistOverview
+from views.widgets.main_content import MainContent
+from views.widgets.player_bar import PlayerBar
+from views.widgets.playlist_overview import PlaylistOverview
 from views.widgets.scan_dialog import ScanDialog
-from views.widgets.Sidebar import Sidebar
-from views.widgets.SplashScreen import SplashScreen
+from views.widgets.sidebar import Sidebar
+from views.widgets.splash_screen import SplashScreen
 
 if TYPE_CHECKING:
     from controllers.main_controller import MainController as Controller

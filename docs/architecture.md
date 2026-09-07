@@ -41,7 +41,7 @@ Target folder (final, sesuai realita kini — bukan rencana tertunda):
 > `infrastructure/playlist_repository.py` + `services/playlist_service.py`
 > (`playlist_changed` event) sudah ada; `MainController` memegang
 > `current_view` (library/playlists/playlist-detail) dan antrean mengikuti
-> view aktif; `views/widgets/PlaylistOverview.py` + `views/widgets/dialogs.py`
+> view aktif; `views/widgets/playlist_overview.py` + `views/widgets/dialogs.py`
 > untuk overview/chooser; `MainContent` punya tombol `+`/`×` per baris.
 >
 > Keputusan view layer (rapian pasca-Fase 4): seluruh UI dikonsolidasi
@@ -68,7 +68,7 @@ services/player_service.py    # queue + transport + auto-next wrap (Fase 2)
 services/playlist_service.py  # CRUD playlist + link, event playlist_changed (Fase 3)
 controllers/main_controller.py# tipis: handle_* + current_view + ticker after(1000)
 views/window.py      # komposisi window: grid Sidebar/MainContent/PlaylistOverview/PlayerBar + callback binding
-views/widgets/Sidebar.py + MainContent.py + PlayerBar.py + PlaylistOverview.py + dialogs.py + SplashScreen.py + scroll_helper.py
+views/widgets/sidebar.py + main_content.py + player_bar.py + playlist_overview.py + dialogs.py + splash_screen.py + scroll_helper.py + song_row.py + scan_dialog.py + tooltip.py
 views/theme.py        # design system + format_duration + truncate_text (lihat Style Guide)
 views/icons.py + icon_manager.py  # cached icon loader (assets/icons, termasuk heart/next/prev generate-an)
 ```
