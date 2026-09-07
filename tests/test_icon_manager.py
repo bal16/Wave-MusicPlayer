@@ -3,7 +3,7 @@
 import os
 import sys
 
-from utils.icon_manager import IconManager, resource_path
+from views.icon_manager import IconManager, resource_path
 
 
 def test_resource_path_source_run_uses_cwd(monkeypatch):

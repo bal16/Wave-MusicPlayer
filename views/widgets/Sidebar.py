@@ -7,11 +7,11 @@ import customtkinter as ctk
 from customtkinter import filedialog
 from loguru import logger
 
-from utils.icons import get_folder, get_logo, get_music, get_playlist
+from views.icons import get_folder, get_logo, get_music, get_playlist
 from views.theme import theme
 
 if TYPE_CHECKING:
-    from view import View
+    from views.window import View
 
 
 class Sidebar(ctk.CTkFrame):

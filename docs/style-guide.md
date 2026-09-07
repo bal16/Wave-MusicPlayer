@@ -3,7 +3,7 @@
 > Cross-reference: [Architecture](architecture.md) · [PRD](PRD.md)
 > Owner in code: `views/theme.py` — raw values live only there.
 > New UI code must import tokens from `views/theme.py`, never hardcode hex/font tuples.
-> `view.py` and `components/*` comply (migrasi `config.py` selesai — file dihapus).
+> `views/window.py` and `views/widgets/*` comply (migrasi `config.py` selesai — file dihapus).
 
 ## 1. Tokens
 
@@ -20,7 +20,7 @@
 | Window | sidebar 200 wide, player 90 tall, main `1000x600` |
 
 Helpers: `format_duration(sec) -> "m:ss"` (DB keeps float seconds),
-`apply_dark_mode()` (call once at startup), cached icons in `utils/icons.py`.
+`apply_dark_mode()` (call once at startup), cached icons in `views/icons.py`.
 
 ## 2. Rules
 
@@ -28,9 +28,9 @@ Helpers: `format_duration(sec) -> "m:ss"` (DB keeps float seconds),
 2. Buttons: transparent `fg_color`, `hover_color` = `hover` token.
 3. Duration formatting never in SQL/service — view layer only.
 4. No new hex literals or font tuples outside `views/theme.py`.
-5. Icons via `utils/icons.load_icon(name, w, h)` (cached); no direct `Image.open` in views.
+5. Icons via `views.icons.load_icon(name, w, h)` (cached); no direct `Image.open` in views.
 6. Playlist rows reuse song-row styling (transparent frame, muted meta text).
-   Modal dialogs (`components/dialogs.py`) are `transient` + `grab_set` +
+   Modal dialogs (`views/widgets/dialogs.py`) are `transient` + `grab_set` +
    `wait_window`, returning values (never callbacks into services).
 
 ## 3. Out of scope (post-MVP)

@@ -1,6 +1,6 @@
 """Cached icon loader.
 
-Wraps utils.icon_manager.IconManager with lru_cache so repeated loads
+Wraps views.icon_manager.IconManager with lru_cache so repeated loads
 of the same (name, size) reuse the CTkImage instead of reopening files.
 """
 
@@ -8,7 +8,7 @@ from __future__ import annotations
 
 from functools import lru_cache
 
-from utils.icon_manager import IconManager
+from views.icon_manager import IconManager
 
 _manager = IconManager()
 

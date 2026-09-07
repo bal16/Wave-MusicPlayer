@@ -51,15 +51,15 @@ Add a dependency with `uv add <package>` (runtime) or `uv add --group dev <packa
 
 ```txt
 main.py               # entry point: logging, DB init, container wiring
-view.py               # CTk root window, splash screen, layout grid
 app/container.py      # composition root: engine → repo → service → controller
 controllers/          # thin MainController: handlers, view routing, tickers
 domain/               # Song/Playlist entities + repository/backend ABCs
 infrastructure/       # SQLModel, TinyTag tagger, VLC/miniaudio backends
 services/             # library, player (queue + auto-next), playlist logic
-components/           # Sidebar, MainContent, PlayerBar, PlaylistOverview, dialogs
+views/window.py       # CTk root window, splash screen, layout grid
+views/widgets/        # Sidebar, MainContent, PlayerBar, PlaylistOverview, dialogs
 views/theme.py        # design tokens (colors, fonts, spacing)
-utils/icons.py        # cached, lazy icon loader (assets/icons)
+views/icons.py        # cached, lazy icon loader (assets/icons)
 tests/                # pytest suite, GUI-free; manual smoke in docs/smoke-fase2.md
 docs/                 # PRD, architecture, DB schema, style guide, smoke list, TODO
 __old/                # legacy Tkinter/pygame OOP project, kept for reference (see __old/README.md)
@@ -79,4 +79,5 @@ Icons are bundled from `assets/icons`; the database (`data/app.db`) and logs sta
 ## Notes
 
 - `data/` and `logs/` are local state, git-ignored by design.
+- `build/` and `dist/` are local build artifacts (git-ignored); remove with `uv run poe clean`, rebuild with `poe build`/`poe dist`.
 - One ruff scope for the editor and the gate (`ruff check .` / `ruff format .`, config in `pyproject.toml`); `.vscode/settings.json` points the editor at the project's own ruff, `.markdownlint.yaml` covers docs.

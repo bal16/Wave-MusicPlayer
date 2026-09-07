@@ -6,7 +6,7 @@ from typing import TYPE_CHECKING
 import customtkinter as ctk
 from loguru import logger
 
-from utils.icons import (
+from views.icons import (
     get_heart_filled,
     get_heart_outline,
     get_muted,

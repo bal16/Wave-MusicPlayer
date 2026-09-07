@@ -5,8 +5,8 @@ from typing import TYPE_CHECKING
 
 import customtkinter as ctk
 
-from components.scroll_helper import register_scrollable_frame
 from views.theme import theme
+from views.widgets.scroll_helper import register_scrollable_frame
 
 if TYPE_CHECKING:
     from domain.entities import Playlist

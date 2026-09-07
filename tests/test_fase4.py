@@ -162,7 +162,7 @@ def test_background_scan_failure_surfaces(tmp_path):
 
 
 def test_icon_loading_is_lazy_and_cached():
-    import utils.icons as icons
+    import views.icons as icons
 
     first = icons.load_icon.cache_info()
     icons.load_icon("play", 32, 33)

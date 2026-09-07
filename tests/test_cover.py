@@ -114,7 +114,7 @@ def test_service_get_cover_without_reader_support():
 
 
 def test_decode_cover_valid_and_garbage():
-    from components.PlayerBar import PlayerBar
+    from views.widgets.PlayerBar import PlayerBar
 
     assert PlayerBar._decode_cover(_png_bytes()) is not None
     assert PlayerBar._decode_cover(b"not-an-image") is None

@@ -34,20 +34,21 @@ Target folder (final, sesuai realita kini — bukan rencana tertunda):
 
 > Status Fase 0 ✅: `domain/`, `infrastructure/{db,models,song_repository,audio_tagger}.py`,
 > `services/library_service.py`, `app/container.py`, `controllers/main_controller.py`,
-> `views/theme.py`, `utils/icons.py` sudah ada. `models/` dan `controller.py` tinggal
+> `views/theme.py`, `views/icons.py` sudah ada. `models/` dan `controller.py` tinggal
 > sebagai shim re-export; `model.py` dihapus.
 >
 > Status Fase 3 ✅: `Playlist` entity + `PlaylistRepository` ABC +
 > `infrastructure/playlist_repository.py` + `services/playlist_service.py`
 > (`playlist_changed` event) sudah ada; `MainController` memegang
 > `current_view` (library/playlists/playlist-detail) dan antrean mengikuti
-> view aktif; `components/PlaylistOverview.py` + `components/dialogs.py`
+> view aktif; `views/widgets/PlaylistOverview.py` + `views/widgets/dialogs.py`
 > untuk overview/chooser; `MainContent` punya tombol `+`/`×` per baris.
 >
-> Keputusan view layer (pasca-Fase 4): rencana awal "pindah widget ke
-> `views/`" **dibatalkan** — struktur kini dipertahankan: root `view.py`
-> (komposisi window + callback binding), `components/` (7 widget Tk),
-> `views/` hanya design tokens. Aturan gaya di [Style Guide](style-guide.md).
+> Keputusan view layer (rapian pasca-Fase 4): seluruh UI dikonsolidasi
+> di `views/` — `views/window.py` (komposisi window + callback binding),
+> `views/widgets/` (7 widget Tk), `views/theme.py` (design tokens),
+> `views/icons.py` + `views/icon_manager.py` (icon loader).
+> Aturan gaya di [Style Guide](style-guide.md).
 
 ```txt
 main.py               # bootstrap + init_db + controller.bind + startup load
@@ -66,10 +67,10 @@ services/library_service.py   # scan_folder(), list_songs(), toggle_favorite(), 
 services/player_service.py    # queue + transport + auto-next wrap (Fase 2)
 services/playlist_service.py  # CRUD playlist + link, event playlist_changed (Fase 3)
 controllers/main_controller.py# tipis: handle_* + current_view + ticker after(1000)
-view.py               # komposisi window: grid Sidebar/MainContent/PlaylistOverview/PlayerBar + callback binding
-components/Sidebar.py + MainContent.py + PlayerBar.py + PlaylistOverview.py + dialogs.py + SplashScreen.py + scroll_helper.py
+views/window.py      # komposisi window: grid Sidebar/MainContent/PlaylistOverview/PlayerBar + callback binding
+views/widgets/Sidebar.py + MainContent.py + PlayerBar.py + PlaylistOverview.py + dialogs.py + SplashScreen.py + scroll_helper.py
 views/theme.py        # design system + format_duration + truncate_text (lihat Style Guide)
-utils/icons.py + icon_manager.py  # cached icon loader (assets/icons, termasuk heart/next/prev generate-an)
+views/icons.py + icon_manager.py  # cached icon loader (assets/icons, termasuk heart/next/prev generate-an)
 ```
 
 Aturan:
@@ -188,7 +189,7 @@ controller.run()
 - **Add (PRD F1):** `Sidebar --on_add_folder--> Controller.handle_add_folder --scan (thread)--> LibraryService --publish library_changed--> EventBus --show_songs--> SongList`. Menggantikan `destroy()`-recreate.
 - **List (PRD F2):** `Controller.handle_show_music --list_songs--> LibraryService --list_all--> Repo --> SongList.set_songs()`. Sumber kebenaran = tabel `song` di [Schema §2](schema.md#2-tabel). Header sticky di luar scroll area; row grid kolom tetap.
 - **Favorite (ADR-0001):** `SongList --on_favorite(id)--> View._on_favorite_song --toggle + get_song--> LibraryService --update_song--> SongList` (fast-path O(1) via `_row_by_id`; miss → `refresh_current_view()` penuh; `PlayerBar.set_favorite()` ikut sync bila lagu sedang diputar).
-- **Scroll + highlight (ADR-0002, lokal):** gesture touchpad tiba sebagai Button-4/5 normal (terverifikasi via probe) → tiap widget row punya binding wheel eksplisit tepat-sekali (`components/scroll_helper.py`, dipakai song list & playlist overview; keyboard Up/Down/PgUp/PgDn/Home/End). Highlight lagu aktif via `SongList.set_playing()` dari `View.show_track()` (mencakup select/next/prev/auto-next).
+- **Scroll + highlight (ADR-0002, lokal):** gesture touchpad tiba sebagai Button-4/5 normal (terverifikasi via probe) → tiap widget row punya binding wheel eksplisit tepat-sekali (`views/widgets/scroll_helper.py`, dipakai song list & playlist overview; keyboard Up/Down/PgUp/PgDn/Home/End). Highlight lagu aktif via `SongList.set_playing()` dari `View.show_track()` (mencakup select/next/prev/auto-next).
 - **Play (PRD F3):** `SongList --on_select(id)--> Controller --songs--> Service --play_queue--> PlayerService --load/play--> PlayerBackend --set_track/set_progress--> PlayerBar`. Songs = `library.list_songs` atau `playlists.songs_in_playlist` sesuai view aktif. Posisi slider via `after(1000)`, event `media_end` → auto-next dengan wrap ke lagu pertama.
 
 Aturan threading: TinyTag + VLC callback **tidak boleh** menyentuh widget langsung; selalu lewat `view.after(0, ...)` atau EventBus.
@@ -216,7 +217,7 @@ Catatan kompatibilitas (terverifikasi): libvlc 4 menghapus event-manager API, me
 
 ## 6. Langkah migrasi (tidak merusak yang jalan)
 
-1. ✅ SELESAI — Tambah `domain/`, `infrastructure/song_repository.py`, `services/library_service.py`, `app/container.py`; `mainloop` pindah ke `run()`; `model.py` dihapus. Plus: `views/theme.py` (design system) + `utils/icons.py` (cached loader).
-2. ✅ SELESAI — `init_db` dipanggil di `main.py`; DB path absolut (`data/app.db`, di-`gitignore`); `utils/icons` cached (lazy penuh saat refactor views).
+1. ✅ SELESAI — Tambah `domain/`, `infrastructure/song_repository.py`, `services/library_service.py`, `app/container.py`; `mainloop` pindah ke `run()`; `model.py` dihapus. Plus: `views/theme.py` (design system) + `views/icons.py` (cached loader).
+2. ✅ SELESAI — `init_db` dipanggil di `main.py`; DB path absolut (`data/app.db`, di-`gitignore`); `views/icons` cached (lazy penuh saat refactor views).
 3. ✅ SELESAI — `master.controller` diganti callback (`Sidebar.on_add_folder/on_navigate`, `MainContent.on_select/on_favorite`, `PlayerBar.on_*`); `set_songs()` selesai. `PlayerBar` ter-wiring ke `PlayerService` (Fase 2); playlist overview selesai (Fase 3). Shim terakhir pensiun: `controller.py`, `models/`, `config.py` dihapus.
 4. ✅ SELESAI — Pola `destroy()`-recreate dihapus (`refresh_song_list`, `change_main_content`); update data in-place + EventBus. Row-level `destroy` di `_clear_rows` adalah daur-ulang normal, dipertahankan. Toggle favorit memakai fast-path `MainContent.update_song()` by-ID via `_row_by_id` (ADR-0001); full `set_songs()` hanya untuk scan/filter/sort/pindah view.

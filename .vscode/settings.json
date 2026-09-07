@@ -13,5 +13,30 @@
     "editor.codeActionsOnSave": {
       "source.organizeImports": "explicit"
     }
+  },
+  // Declutter Explorer: build artifacts, env, caches, local state.
+  // __old/ intentionally stays visible (reference, per decision).
+  "files.exclude": {
+    "build/": true,
+    "dist/": true,
+    ".venv/": true,
+    "**/__pycache__/": true,
+    "**/*.pyc": true,
+    ".pytest_cache/": true,
+    ".ruff_cache/": true,
+    "logs/": true,
+    "data/": true,
+    ".idea/": true
+  },
+  "search.exclude": {
+    "build/": true,
+    "dist/": true,
+    ".venv/": true,
+    "**/__pycache__/": true,
+    ".pytest_cache/": true,
+    ".ruff_cache/": true,
+    "logs/": true,
+    "data/": true,
+    "__old/": true
   }
 }

@@ -6,7 +6,7 @@ from loguru import logger
 from app.container import build_container
 from controllers.main_controller import MainController
 from infrastructure.db import init_db
-from view import View
+from views.window import View
 
 
 def main():

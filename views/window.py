@@ -6,12 +6,12 @@ from typing import TYPE_CHECKING
 import customtkinter as ctk
 from loguru import logger
 
-from components.dialogs import ask_text, choose_playlist, confirm
-from components.MainContent import MainContent
-from components.PlayerBar import PlayerBar
-from components.PlaylistOverview import PlaylistOverview
-from components.Sidebar import Sidebar
-from components.SplashScreen import SplashScreen
+from views.widgets.dialogs import ask_text, choose_playlist, confirm
+from views.widgets.MainContent import MainContent
+from views.widgets.PlayerBar import PlayerBar
+from views.widgets.PlaylistOverview import PlaylistOverview
+from views.widgets.Sidebar import Sidebar
+from views.widgets.SplashScreen import SplashScreen
 
 if TYPE_CHECKING:
     from controllers.main_controller import MainController as Controller

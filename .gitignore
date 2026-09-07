@@ -12,6 +12,9 @@ dist/
 .env.*
 
 .idea/
+.vscode/
+.pytest_cache/
+.ruff_cache/
 
 # Local decision records (not committed by design)
 docs/adr/

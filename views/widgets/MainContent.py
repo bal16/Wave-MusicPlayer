@@ -6,9 +6,9 @@ from typing import TYPE_CHECKING
 
 import customtkinter as ctk
 
-from components.scroll_helper import enable_wheel_scroll, register_scrollable_frame
-from utils.icons import get_heart_filled, get_heart_outline
+from views.icons import get_heart_filled, get_heart_outline
 from views.theme import format_duration, theme
+from views.widgets.scroll_helper import enable_wheel_scroll, register_scrollable_frame
 
 if TYPE_CHECKING:
     from domain.entities import Song

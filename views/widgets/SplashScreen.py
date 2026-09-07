@@ -1,6 +1,6 @@
 import customtkinter as ctk
 
-from utils.icons import get_logo_box
+from views.icons import get_logo_box
 from views.theme import theme
 
 
