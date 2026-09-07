@@ -30,14 +30,12 @@ views --callback--> controllers --call--> services --call--> domain/interfaces
   <--update--         <--event--              ▲ infrastructure implements interfaces
 ```
 
-Target folder (migrasi bertahap, UI belakangan — sesuai PRD Fase 0):
+Target folder (final, sesuai realita kini — bukan rencana tertunda):
 
 > Status Fase 0 ✅: `domain/`, `infrastructure/{db,models,song_repository,audio_tagger}.py`,
 > `services/library_service.py`, `app/container.py`, `controllers/main_controller.py`,
 > `views/theme.py`, `utils/icons.py` sudah ada. `models/` dan `controller.py` tinggal
-> sebagai shim re-export; `model.py` dihapus. `views/` baru berisi `theme.py` —
-> `main_view/sidebar/song_list/player_bar` dijadwalkan Fase 1–2. Aturan gaya di
-> [Style Guide](style-guide.md).
+> sebagai shim re-export; `model.py` dihapus.
 >
 > Status Fase 3 ✅: `Playlist` entity + `PlaylistRepository` ABC +
 > `infrastructure/playlist_repository.py` + `services/playlist_service.py`
@@ -45,10 +43,14 @@ Target folder (migrasi bertahap, UI belakangan — sesuai PRD Fase 0):
 > `current_view` (library/playlists/playlist-detail) dan antrean mengikuti
 > view aktif; `components/PlaylistOverview.py` + `components/dialogs.py`
 > untuk overview/chooser; `MainContent` punya tombol `+`/`×` per baris.
+>
+> Keputusan view layer (pasca-Fase 4): rencana awal "pindah widget ke
+> `views/`" **dibatalkan** — struktur kini dipertahankan: root `view.py`
+> (komposisi window + callback binding), `components/` (7 widget Tk),
+> `views/` hanya design tokens. Aturan gaya di [Style Guide](style-guide.md).
 
 ```txt
 main.py               # bootstrap + init_db + controller.bind + startup load
-config.py             # re-export theme (kompat); nilai kanonis di views/theme.py
 app/container.py      # wiring: engine → repo → service → view → controller
 domain/entities.py    # Song, Playlist (dataclass, tanpa SQLModel/Tk)
 domain/interfaces.py  # SongRepository, PlaylistRepository, PlayerBackend ABC + EventBus
@@ -64,9 +66,10 @@ services/library_service.py   # scan_folder(), list_songs(), toggle_favorite(), 
 services/player_service.py    # queue + transport + auto-next wrap (Fase 2)
 services/playlist_service.py  # CRUD playlist + link, event playlist_changed (Fase 3)
 controllers/main_controller.py# tipis: handle_* + current_view + ticker after(1000)
-components/Sidebar.py + MainContent.py + PlayerBar.py + PlaylistOverview.py + dialogs.py
-views/theme.py        # design system (lihat Style Guide)
-utils/icons.py        # cached icon loader
+view.py               # komposisi window: grid Sidebar/MainContent/PlaylistOverview/PlayerBar + callback binding
+components/Sidebar.py + MainContent.py + PlayerBar.py + PlaylistOverview.py + dialogs.py + SplashScreen.py + scroll_helper.py
+views/theme.py        # design system + format_duration + truncate_text (lihat Style Guide)
+utils/icons.py + icon_manager.py  # cached icon loader (assets/icons, termasuk heart/next/prev generate-an)
 ```
 
 Aturan:
@@ -83,6 +86,9 @@ classDiagram
   class MainView {
     +set_controller()
     +show_songs(songs)
+    +show_playlists(playlists)
+    +show_playlist_songs(playlist, songs)
+    +refresh_song_row(song)
     +show_track(song)
     +set_progress(sec, total)
   }

@@ -3,8 +3,7 @@
 > Cross-reference: [Architecture](architecture.md) · [PRD](PRD.md)
 > Owner in code: `views/theme.py` — raw values live only there.
 > New UI code must import tokens from `views/theme.py`, never hardcode hex/font tuples.
-> Legacy modules (`view.py`, `components/*`, `config.py`) migrate gradually; `config.py`
-> currently re-exports theme values for compat.
+> `view.py` and `components/*` comply (migrasi `config.py` selesai — file dihapus).
 
 ## 1. Tokens
 
