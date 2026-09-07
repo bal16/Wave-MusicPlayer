@@ -10,6 +10,7 @@ from views.widgets.dialogs import ask_text, choose_playlist, confirm
 from views.widgets.MainContent import MainContent
 from views.widgets.PlayerBar import PlayerBar
 from views.widgets.PlaylistOverview import PlaylistOverview
+from views.widgets.scan_dialog import ScanDialog
 from views.widgets.Sidebar import Sidebar
 from views.widgets.SplashScreen import SplashScreen
 
@@ -22,7 +23,7 @@ class View(ctk.CTk):
     def __init__(self):
         super().__init__()
         self.controller: Controller | None = None  # Placeholder
-        self._scan_dialog: ctk.CTkToplevel | None = None
+        self.scan_dialog = ScanDialog(self)
 
         self.withdraw()
 
@@ -194,47 +195,24 @@ class View(ctk.CTk):
     def set_muted(self, muted: bool) -> None:
         self.player_bar.set_muted(muted)
 
-    # -- Scan progress dialog (driven by the controller, UI thread only) --
+    # -- Scan progress dialog (owned by ScanDialog; wrappers keep the
+    # controller-facing API stable, UI thread only) --
 
     def show_scan_started(self) -> None:
         """Open a small modal progress dialog for the background scan."""
-        self.show_scan_finished()
-        top = ctk.CTkToplevel(self)
-        top.title("Scanning music")
-        top.geometry("320x140")
-        top.transient(self)
-        top.grab_set()
-        ctk.CTkLabel(top, text="Scanning folder…").pack(pady=(20, 10), padx=20)
-        bar = ctk.CTkProgressBar(top, width=260)
-        bar.set(0)
-        bar.pack(pady=5, padx=20)
-        self._scan_dialog = top
-        self._scan_bar = bar
+        self.scan_dialog.show_started()
 
     def show_scan_progress(self, done: int, total: int) -> None:
         """Update the determinate bar (no-op without an open dialog)."""
-        if self._scan_dialog is None or not self._scan_dialog.winfo_exists():
-            return
-        fraction = (done / total) if total > 0 else 0.0
-        self._scan_bar.set(max(0.0, min(1.0, fraction)))
-        self._scan_dialog.title(f"Scanning music — {done}/{total}")
+        self.scan_dialog.show_progress(done, total)
 
     def show_scan_finished(self) -> None:
         """Close the progress dialog if open."""
-        if self._scan_dialog is not None:
-            try:
-                if self._scan_dialog.winfo_exists():
-                    self._scan_dialog.destroy()
-            except Exception as e:
-                logger.debug(f"Scan dialog close failed (ignored): {e}")
-            self._scan_dialog = None
+        self.scan_dialog.show_finished()
 
     def show_scan_failed(self, message: str) -> None:
         """Close the dialog and surface the error."""
-        from tkinter import messagebox
-
-        self.show_scan_finished()
-        messagebox.showerror("Scan failed", message)
+        self.scan_dialog.show_failed(message)
 
     # -- Callbacks bound to the controller in set_controller() --
 
