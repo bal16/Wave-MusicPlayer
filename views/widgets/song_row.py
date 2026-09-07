@@ -9,7 +9,6 @@ the now-playing highlight. MainContent only manages the collection
 
 from __future__ import annotations
 
-import tkinter as tk
 from collections.abc import Callable
 from typing import TYPE_CHECKING
 
@@ -18,6 +17,7 @@ import customtkinter as ctk
 from views.icons import get_heart_filled, get_heart_outline
 from views.theme import format_duration, theme
 from views.widgets.scroll_helper import enable_wheel_scroll
+from views.widgets.tooltip import Tooltip
 
 if TYPE_CHECKING:
     from domain.entities import Song
@@ -52,64 +52,6 @@ def format_song_row(song: Song) -> dict:
 def favorite_icon(is_favorite: bool):
     """Heart asset for love/like/favorite state (icon, never emoji/font)."""
     return get_heart_filled() if is_favorite else get_heart_outline()
-
-
-class _Tooltip:
-    """Tiny hover tooltip (no dependency, Tk-only)."""
-
-    def __init__(self, widget, text: str) -> None:
-        self.widget = widget
-        self.text = text
-        self.tip: tk.Toplevel | None = None
-        self._after: str | None = None
-        widget.bind("<Enter>", self._schedule, add="+")
-        widget.bind("<Leave>", self._hide, add="+")
-        widget.bind("<ButtonPress-1>", self._hide, add="+")
-        widget.bind("<Button-4>", self._hide, add="+")
-        widget.bind("<Button-5>", self._hide, add="+")
-
-    def _schedule(self, _event=None) -> None:
-        self._cancel()
-        self._after = self.widget.after(500, self._show)
-
-    def _cancel(self) -> None:
-        if self._after is not None:
-            try:
-                self.widget.after_cancel(self._after)
-            except tk.TclError:
-                pass
-            self._after = None
-
-    def _show(self) -> None:
-        self._after = None
-        if self.tip is not None:
-            return
-        try:
-            x = self.widget.winfo_rootx() + 10
-            y = self.widget.winfo_rooty() + self.widget.winfo_height() + 4
-            self.tip = tk.Toplevel(self.widget)
-            self.tip.wm_overrideredirect(True)
-            self.tip.wm_geometry(f"+{x}+{y}")
-            tk.Label(
-                self.tip,
-                text=self.text,
-                bg=theme.colors.surface,
-                fg=theme.colors.text_primary,
-                font=(theme.fonts.sans, 11),
-                padx=8,
-                pady=4,
-            ).pack()
-        except tk.TclError:
-            self.tip = None
-
-    def _hide(self, _event=None) -> None:
-        self._cancel()
-        if self.tip is not None:
-            try:
-                self.tip.destroy()
-            except tk.TclError:
-                pass
-            self.tip = None
 
 
 class SongRow(ctk.CTkFrame):
@@ -172,7 +114,7 @@ class SongRow(ctk.CTkFrame):
             command=lambda: self._emit(self._on_favorite),
         )
         self.btn_fav.grid(row=0, column=3)
-        _Tooltip(self.btn_fav, "Toggle favorite")
+        Tooltip(self.btn_fav, "Toggle favorite")
         enable_wheel_scroll(self.btn_fav, self._scroll_frame)
 
         # Playlist action: add ("+") or remove ("×") depending on the view.
@@ -186,7 +128,7 @@ class SongRow(ctk.CTkFrame):
                 text_color=theme.colors.text_muted,
                 command=lambda: self._emit(self._on_remove),
             )
-            _Tooltip(self.btn_list, "Remove from playlist")
+            Tooltip(self.btn_list, "Remove from playlist")
         else:
             self.btn_list = ctk.CTkButton(
                 self,
@@ -197,7 +139,7 @@ class SongRow(ctk.CTkFrame):
                 text_color=theme.colors.text_muted,
                 command=lambda: self._emit(self._on_add),
             )
-            _Tooltip(self.btn_list, "Add to playlist")
+            Tooltip(self.btn_list, "Add to playlist")
         self.btn_list.grid(row=0, column=2)
         enable_wheel_scroll(self.btn_list, self._scroll_frame)
 
