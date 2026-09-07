@@ -57,7 +57,20 @@ def is_available() -> bool:
 
 
 class VlcBackend(PlayerBackend):
+    """Primary engine: libvlc via python-vlc (audio only, --no-video).
+
+    Raises:
+        BackendUnavailableError: On construction when python-vlc is
+            missing or libvlc cannot create a player.
+
+    Note:
+        End-of-media arrives via libvlc events on v3, else via a daemon
+        polling thread (see _ensure_monitor). All callbacks fire off the
+        UI thread — never touch widgets from them.
+    """
+
     def __init__(self) -> None:
+        """Create the libvlc instance/player and pick end-delivery (see class docs)."""
         try:
             import vlc
         except ImportError as e:
@@ -94,6 +107,10 @@ class VlcBackend(PlayerBackend):
             return False
 
     def _ensure_monitor(self) -> None:
+        """Start the daemon end-poller once, only when events are unusable.
+
+        No-op when libvlc events attached or the monitor already runs.
+        """
         with self._monitor_lock:
             if self._use_events or self._monitor_started:
                 return
@@ -102,6 +119,12 @@ class VlcBackend(PlayerBackend):
         thread.start()
 
     def _poll_end(self) -> None:
+        """Poll for natural track end until the player object dies.
+
+        Runs forever on a daemon thread; exits silently when libvlc
+        calls start raising (teardown). Fires the end callback only for
+        a natural finish — user pauses/stops are excluded via flags.
+        """
         while True:
             time.sleep(_POLL_INTERVAL)
             try:
@@ -124,6 +147,11 @@ class VlcBackend(PlayerBackend):
                 self._was_playing = False
 
     def _fire_end(self) -> None:
+        """Invoke the registered end callback, if any.
+
+        Invoked on a VLC/poller thread — never touch widgets here.
+        Callback errors are logged, never raised.
+        """
         # Invoked on a VLC/poller thread — never touch widgets here.
         if self._end_callback is not None:
             try:
@@ -132,6 +160,7 @@ class VlcBackend(PlayerBackend):
                 logger.exception("Error in media-end callback")
 
     def _disarm(self) -> None:
+        """Clear end-detection flags (call on load/stop/close)."""
         self._expecting = False
         self._was_playing = False
         self._paused_by_user = False
@@ -139,6 +168,15 @@ class VlcBackend(PlayerBackend):
     # -- PlayerBackend --
 
     def load(self, file_path: str) -> None:
+        """Build libvlc media for a file and attach it to the player.
+
+        Args:
+            file_path: Absolute path of the audio file.
+
+        Note:
+            Blocking local parse (≤ 5s) so durations are reliable;
+            absent on libvlc 4+, covered by the metadata fallback.
+        """
         media = self._instance.media_new(file_path)
         # Blocking parse of a local file so get_duration() works reliably.
         # Absent on libvlc 4+ — failures are covered by metadata fallback.
@@ -150,16 +188,19 @@ class VlcBackend(PlayerBackend):
         self._player.set_media(media)
 
     def play(self) -> None:
+        """Start playback and arm natural-end detection."""
         self._ensure_monitor()
         self._paused_by_user = False
         self._expecting = True
         self._player.play()
 
     def pause(self) -> None:
+        """Pause, flagged as user-initiated so the poller ignores it."""
         self._paused_by_user = True
         self._player.set_pause(1)
 
     def stop(self) -> None:
+        """Halt playback; falls back to pause + rewind on libvlc 4."""
         self._disarm()
         try:
             self._player.stop()
@@ -172,16 +213,37 @@ class VlcBackend(PlayerBackend):
                 logger.warning(f"VLC stop fallback failed: {e}")
 
     def seek(self, seconds: float) -> None:
+        """Jump to a position.
+
+        Args:
+            seconds: Target in seconds (negative values clamp to 0).
+        """
         self._player.set_time(max(0, int(seconds * 1000)))
 
     def set_volume(self, level: float) -> None:
+        """Set the output gain.
+
+        Args:
+            level: Volume in 0.0 - 1.0 (clamped, mapped to 0-100 for libvlc).
+        """
         clamped = max(0.0, min(1.0, level))
         self._player.audio_set_volume(int(clamped * 100))
 
     def get_pos(self) -> float:
+        """Current playback position.
+
+        Returns:
+            Position in seconds (>= 0.0).
+        """
         return max(0.0, self._player.get_time() / 1000.0)
 
     def get_duration(self) -> float:
+        """Total media length, trying media then player length.
+
+        Returns:
+            Duration in seconds, or 0.0 when libvlc reports nothing
+            (PlayerService then falls back to song metadata).
+        """
         media = self._player.get_media()
         duration_ms = None
         if media is not None:
@@ -197,13 +259,27 @@ class VlcBackend(PlayerBackend):
         return max(0.0, (duration_ms or 0) / 1000.0)
 
     def is_playing(self) -> bool:
+        """Whether libvlc reports active playback.
+
+        Returns:
+            True while playing, False otherwise.
+        """
         return bool(self._player.is_playing())
 
     def on_end(self, callback) -> None:
+        """Register the media-end callback.
+
+        Args:
+            callback: Zero-arg callable fired on natural track end via
+                libvlc events (v3) or the polling monitor.
+        """
         self._end_callback = callback
 
     def close(self) -> None:
-        """Stop and release libvlc objects explicitly (idempotent)."""
+        """Stop and release libvlc objects explicitly (idempotent).
+
+        Safe to call repeatedly; per-object failures are logged and ignored.
+        """
         self._disarm()
         try:
             self.stop()

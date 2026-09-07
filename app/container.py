@@ -24,11 +24,17 @@ from services.playlist_service import PlaylistService
 
 
 def create_player_backend() -> tuple[str, PlayerBackend]:
-    """Detect and build the audio backend. Returns (name, backend).
+    """Detect and build the audio backend.
 
     Honors WAVE_AUDIO_BACKEND=vlc|miniaudio to force a backend (useful
-    when auto-detection picks a crashing VLC). Defaults to auto.
-    Raises BackendUnavailableError when no usable backend exists.
+    when auto-detection picks a crashing VLC). Defaults to auto: VLC
+    when a compatible libvlc exists, else the miniaudio fallback.
+
+    Returns:
+        A (backend_name, backend) tuple where name is "vlc" or "miniaudio".
+
+    Raises:
+        BackendUnavailableError: When no usable backend exists.
     """
     import os
 
@@ -52,6 +58,19 @@ def create_player_backend() -> tuple[str, PlayerBackend]:
 
 @dataclass
 class Container:
+    """Wired object graph for the app (built once in main).
+
+    Attributes:
+        engine: SQLAlchemy engine for the local SQLite library.
+        repo: Song persistence used by the library service.
+        library: Scan/query/favorite service.
+        bus: Shared event bus (library_changed, playlist_changed).
+        player: Queue/transport service with the chosen backend.
+        playlists: Playlist CRUD + link service.
+        backend_name: Engine label ("vlc", "miniaudio", or test-double name).
+        controller: Attached later (or via build_container(view=...)).
+    """
+
     engine: Engine
     repo: SqlSongRepository
     library: LibraryService
@@ -69,7 +88,15 @@ def build_container(
 ) -> Container:
     """Build backend services; optionally attach a view + controller.
 
-    Pass an explicit backend in tests to avoid touching real audio devices.
+    Args:
+        view: Real or fake view. When given, a MainController is built
+            and stored on the container.
+        engine: Override the default SQLite engine (tests use throwaway DBs).
+        backend: Explicit audio backend. Pass a fake in tests to avoid
+            touching real audio devices; None triggers auto-detection.
+
+    Returns:
+        A fully wired Container.
     """
     eng = engine or default_engine
     bus = EventBus()

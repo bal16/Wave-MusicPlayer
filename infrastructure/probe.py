@@ -14,13 +14,29 @@ PROBE_TIMEOUT_S = 20
 
 
 def probe_in_subprocess(code: str) -> bool:
-    """Run snippet in a child interpreter. True only on clean exit."""
+    """Run a snippet in a child interpreter. True only on clean exit.
+
+    Args:
+        code: Python source executed as `sys.executable -c code`.
+
+    Returns:
+        True when the child exits with code 0 (probe passed).
+    """
     returncode, _ = run_probe(code)
     return returncode == 0
 
 
 def run_probe(code: str) -> tuple[int, str]:
-    """Run snippet in a child interpreter. Return (exit code, stdout)."""
+    """Run a snippet in a child interpreter. Return (exit code, stdout).
+
+    Args:
+        code: Python source executed as `sys.executable -c code`.
+
+    Returns:
+        A (returncode, stdout-stripped) tuple. Any launch failure
+        (missing interpreter, timeout) maps to (1, "") so callers only
+        branch on the code.
+    """
     try:
         result = subprocess.run(
             [sys.executable, "-c", code],
