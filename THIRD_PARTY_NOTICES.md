@@ -18,6 +18,10 @@ Some visual assets in this repository were contributed by the team members
 above. The current application code has been rebuilt and is maintained by
 Ahmad Hamid Balya.
 
+Unless a file says otherwise, the MIT license in `LICENSE` applies to the
+current application code. The `__old/` directory is kept for historical
+reference and retains the copyright of its original authors.
+
 ## Reference template: MusicByte
 
 An early reference copy of MusicByte is kept under
