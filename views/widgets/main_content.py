@@ -102,19 +102,23 @@ class MainContent(ctk.CTkFrame):
 
         self.lbl_empty.pack_forget()
         if len(visible) > CHUNK_THRESHOLD:
-            self._render_chunked(visible)
+            self._render_chunked(visible, len(songs))
         else:
             for idx, song in enumerate(visible, start=1):
                 self.create_song_row(idx, song)
             self._finish_overflow(len(songs))
 
-    def _render_chunked(self, visible: list[Song]) -> None:
+    def _render_chunked(self, visible: list[Song], total: int | None = None) -> None:
         """Render big lists in slices so the window stays responsive.
 
         Progress is shown in place ("Loading… i/N"); each slice yields
         to the event loop via after(). A TclError means the window was
         closed mid-load — just stop.
+
+        ``total`` is the untruncated song count so the overflow note
+        reports the real remainder; it defaults to ``len(visible)``.
         """
+        total = len(visible) if total is None else total
         self.lbl_empty.configure(text=f"Loading… 0/{len(visible)}")
         self.lbl_empty.pack(fill="x", pady=20)
         state = {"done": 0}
@@ -130,7 +134,7 @@ class MainContent(ctk.CTkFrame):
                     self.after(1, _batch)
                 else:
                     self.lbl_empty.pack_forget()
-                    self._finish_overflow(len(visible))
+                    self._finish_overflow(total)
             except tk.TclError:
                 pass
 
