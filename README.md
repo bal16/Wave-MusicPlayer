@@ -1,83 +1,66 @@
 # Wave Music Player
 
-Local music player for your own files. No accounts, no streaming, no network calls — pick a folder, and it indexes your tracks into a local SQLite library.
+A desktop music player for the music you already own. Point it at a folder and it builds a local library you can browse, favorite, organize into playlists, and play. No account, no streaming, no network calls.
 
-The UI is a dark CustomTkinter window: a sidebar for navigation, a song list in the middle, and a player bar at the bottom. Metadata comes from TinyTag, storage from SQLModel/SQLite, logs from loguru.
+## Features
 
-## Status
+- Scans a folder for `.mp3` and `.flac` files and skips duplicates
+- Library sorted by recently added, with favorite toggles
+- Playlists you can create, rename, delete, and fill from any song row
+- Playback queue with wrap-around, seek, volume, mute, and embedded cover art
+- VLC when available, miniaudio as the fallback
 
-All MVP phases are done and covered by 75 tests plus a manual smoke checklist:
+## Download
 
-- [x] Add folder → recursive `.mp3`/`.flac` scan on a worker thread with a progress dialog, tags stored in `data/app.db` (skips duplicates by path)
-- [x] List library → rendered from the DB, auto-refreshes on change, favorite toggle via row-level `update_song()` fast-path (ADR-0001), search deferred
-- [x] Playback → VLC primary with miniaudio fallback (auto-detected, overridable via `WAVE_AUDIO_BACKEND`); full-library queue with wrap-around; seek, volume, mute; embedded cover art with bundled fallback
-- [x] Playlist → create/rename/delete, add songs from any row, remove without touching the library; playback queues the open view
-- [x] Polish → threaded scan, lazy icons, no destroy-recreate refreshes, close always terminates
+The latest release includes a ready-to-run Linux build:
 
-Playback smoke cases 1–8 pass via the miniaudio fallback; the VLC path needs a libvlc 3 machine and is still unverified. See `docs/TODO.md` for the checklist and `docs/` for the full plan.
-
-## Run it
-
-You need Python 3.11+ and a display (this is a desktop GUI, it won't start over plain SSH). No system audio dependency for the fallback path; the VLC backend needs a VLC install.
+[Download Wave 0.1.0](https://github.com/bal16/Wave-MusicPlayer/releases/latest)
 
 ```bash
-uv sync          # create .venv and install everything from uv.lock
-uv run poe dev   # start the app with debug logging
+unzip Wave-0.1.0-linux-x86_64.zip
+chmod +x Wave
+./Wave
 ```
 
-`uv run poe start` runs it with default logging. Force an audio backend with `WAVE_AUDIO_BACKEND=vlc|miniaudio`.
+The build is for Linux x86_64 and needs a desktop session. Windows and macOS builds are not available yet.
 
-## Common tasks
+## Run from source
 
-All tasks live in `pyproject.toml` (`[tool.poe.tasks]`), run them with `uv run poe <task>`:
+You need Python 3.11+ and a desktop session.
 
-| Task           | What it does                                              |
-|----------------|-----------------------------------------------------------|
-| `start`        | Run the app                                               |
-| `dev`          | Run the app with debug logging                            |
-| `check`        | Byte-compile all modules (works headless)                 |
-| `lint`         | `ruff check` on the whole repo                            |
-| `format`       | `ruff format` on the whole repo                           |
-| `format-check` | Fail if any file isn't formatted                          |
-| `test`         | `pytest`                                                  |
-| `quality`      | `check` → `lint` → `format-check` → `test`                |
-| `build`        | Onedir bundle into `dist/Wave/` via `wave.spec`           |
-| `dist`         | Single-file binary into `dist/Wave`                       |
-| `clean`        | Remove `build/` and `dist/`                               |
-
-Add a dependency with `uv add <package>` (runtime) or `uv add --group dev <package>` (tooling). The lockfile is the source of truth — there is no `requirements.txt`.
-
-## Layout
-
-```txt
-main.py               # entry point: logging, DB init, container wiring
-app/container.py      # composition root: engine → repo → service → controller
-controllers/          # thin MainController: handlers, view routing, tickers
-domain/               # Song/Playlist entities + repository/backend ABCs
-infrastructure/       # SQLModel, TinyTag tagger, VLC/miniaudio backends
-services/             # library, player (queue + auto-next), playlist logic
-views/window.py       # CTk root window, splash screen, layout grid
-views/widgets/        # Sidebar, MainContent, PlayerBar, PlaylistOverview, dialogs
-views/theme.py        # design tokens (colors, fonts, spacing)
-views/icons.py        # cached, lazy icon loader (assets/icons)
-tests/                # pytest suite, GUI-free; manual smoke in docs/smoke-fase2.md
-docs/                 # PRD, architecture, DB schema, style guide, smoke list, TODO
-__old/                # legacy Tkinter/pygame OOP project, kept for reference (see __old/README.md)
+```bash
+uv sync
+uv run poe start
 ```
 
-`docs/` holds the PRD, architecture, DB schema, style guide, smoke list, TODO, plus `adr/` (decision records, e.g. ADR-0001 row-level song update).
+`uv run poe dev` adds debug logs. Wave tries VLC first and falls back to miniaudio. If both are installed and you want to choose:
+
+```bash
+WAVE_AUDIO_BACKEND=vlc uv run poe start
+WAVE_AUDIO_BACKEND=miniaudio uv run poe start
+```
 
 ## Build a binary
 
 ```bash
-uv run poe build   # dist/Wave/ folder bundle, faster to debug
-uv run poe dist    # single dist/Wave executable, for handing to someone
+uv run poe build   # folder bundle in dist/Wave/
+uv run poe dist    # single executable at dist/Wave
 ```
 
-Icons are bundled from `assets/icons`; the database (`data/app.db`) and logs stay outside the bundle next to where you run it.
+Icons come from `assets/icons`. The database (`data/app.db`) and logs stay outside the bundle, next to where you run it.
+
+## Development
+
+```bash
+uv run poe test      # unit tests
+uv run poe quality   # compile, lint, format check, and tests
+```
+
+The tests run headless. Tkinter and CustomTkinter are replaced with a small fake toolkit, so no display or Xvfb is required.
+
+The app is split into `domain/`, `infrastructure/`, `services/`, `controllers/`, and `views/`. `app/container.py` wires them together and `main.py` starts the app. More detail lives in `docs/`: architecture, database schema, style guide, and smoke checklist.
 
 ## Notes
 
-- `data/` and `logs/` are local state, git-ignored by design.
-- `build/` and `dist/` are local build artifacts (git-ignored); remove with `uv run poe clean`, rebuild with `poe build`/`poe dist`.
-- One ruff scope for the editor and the gate (`ruff check .` / `ruff format .`, config in `pyproject.toml`); `.vscode/settings.json` points the editor at the project's own ruff, `.markdownlint.yaml` covers docs.
+- `data/` and `logs/` hold local state and are not tracked by git.
+- `build/` and `dist/` are generated by PyInstaller. Remove them with `uv run poe clean`.
