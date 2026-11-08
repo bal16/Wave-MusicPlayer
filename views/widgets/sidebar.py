@@ -46,6 +46,7 @@ class Sidebar(ctk.CTkFrame):
             command=command,
         )
         btn.pack(fill="x", padx=20, pady=10)
+        return btn
 
     def open_add_music_window(self):
         """Ask for a folder, then hand it to the bound callback."""
