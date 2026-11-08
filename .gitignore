@@ -15,6 +15,8 @@ dist/
 .vscode/
 .pytest_cache/
 .ruff_cache/
+.coverage
+htmlcov/
 
 # Local decision records (not committed by design)
 docs/adr/
