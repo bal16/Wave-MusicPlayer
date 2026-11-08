@@ -28,6 +28,31 @@ A desktop music player for the music you already own. Point it at a folder and i
 - Playback queue with wrap-around, seek, volume, mute, and embedded cover art
 - VLC when available, miniaudio as the fallback
 
+## Work in progress
+
+Wave is still at 0.1.0, so a few basics you would expect from a music player are not there yet. These are next in line:
+
+- **Shuffle and repeat** — the repeat button sits in the player bar but is disabled, and shuffle is missing entirely
+- **Playlist import and export** — read and write `.m3u` files so playlists can move between players
+- **Search and filters** — search by title, artist, or album, and filter the list to favorites
+- **Sort options** — the library is locked to newest first; add title, artist, album, and duration
+- **Queue panel** — see what is coming next, jump around, and reorder it
+- **Resume last session** — reopen the last queue and playback position
+- **Media keys** — play, pause, and skip from the keyboard or desktop media controls
+- **More formats** — OGG, M4A, and WAV, which are skipped today
+
+### Ideas being considered
+
+Reasonable additions that are not scheduled yet:
+
+- Browsing by album and artist instead of one long song list
+- Drag to reorder songs inside a playlist
+- A mini player and tray controls
+- A light theme toggle, since the app is dark only for now
+- A lyrics panel for embedded or sidecar lyrics
+- An equalizer and gapless or crossfade playback
+- Watching several folders instead of one
+
 ## Download
 
 The latest release includes a ready-to-run Linux build:
