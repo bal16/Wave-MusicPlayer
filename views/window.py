@@ -6,6 +6,7 @@ from typing import TYPE_CHECKING
 import customtkinter as ctk
 from loguru import logger
 
+from views.theme import theme
 from views.widgets.dialogs import ask_text, choose_playlist, confirm
 from views.widgets.main_content import MainContent
 from views.widgets.player_bar import PlayerBar
@@ -33,7 +34,6 @@ class View(ctk.CTk):
         self.run_loading()
 
         self.title("Wave Music Player")
-        self.geometry("1100x650")
         ctk.set_appearance_mode("Dark")
         ctk.set_default_color_theme("dark-blue")
 
@@ -98,7 +98,7 @@ class View(ctk.CTk):
             self.splash.update_idletasks()
 
     def center_main_window(self):
-        w, h = 1000, 600
+        w, h = (int(part) for part in theme.spacing.startup_geometry.split("x"))
         ws, hs = self.winfo_screenwidth(), self.winfo_screenheight()
         x, y = (ws / 2) - (w / 2), (hs / 2) - (h / 2)
         self.geometry(f"{w}x{h}+{int(x)}+{int(y)}")
