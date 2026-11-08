@@ -31,7 +31,7 @@ A desktop music player for the music you already own. Point it at a folder and i
 
 ## Work in progress
 
-Wave is still at 0.1.0, so a few basics you would expect from a music player are not there yet. These are next in line:
+Wave is still early, so a few basics you would expect from a music player are not there yet. These are next in line:
 
 - **Shuffle and repeat** — the repeat button sits in the player bar but is disabled, and shuffle is missing entirely
 - **Playlist import and export** — read and write `.m3u` files so playlists can move between players
@@ -58,10 +58,10 @@ Reasonable additions that are not scheduled yet:
 
 The latest release includes a ready-to-run Linux build:
 
-[Download Wave 0.1.0](https://github.com/bal16/Wave-MusicPlayer/releases/latest)
+[Download Wave 0.1.1](https://github.com/bal16/Wave-MusicPlayer/releases/latest)
 
 ```bash
-unzip Wave-0.1.0-linux-x86_64.zip
+unzip Wave-0.1.1-linux-x86_64.zip
 chmod +x Wave
 ./Wave
 ```
