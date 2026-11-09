@@ -8,15 +8,15 @@
 <h1 align="center">Wave Music Player</h1>
 
 <p align="center">
-  <a href="https://github.com/bal16/Wave-MusicPlayer/releases/latest"><img alt="Release" src="https://img.shields.io/github/v/release/bal16/Wave-MusicPlayer?label=release&amp;color=2ccae6"></a>
-  <img alt="Python 3.11+" src="https://img.shields.io/badge/python-3.11%2B-3776AB?logo=python&amp;logoColor=white">
-  <img alt="CustomTkinter" src="https://img.shields.io/badge/UI-CustomTkinter-1f6feb">
-  <img alt="SQLite" src="https://img.shields.io/badge/storage-SQLite-003B57?logo=sqlite&amp;logoColor=white">
-  <img alt="VLC and miniaudio" src="https://img.shields.io/badge/audio-VLC%20%7C%20miniaudio-FF8800?logo=vlcmediaplayer&amp;logoColor=white">
-  <img alt="Linux x86_64" src="https://img.shields.io/badge/platform-Linux%20x86__64-333333?logo=linux&amp;logoColor=white">
-  <img alt="462 tests" src="https://img.shields.io/badge/tests-462%20passed-2ea44f?logo=pytest&amp;logoColor=white">
-  <img alt="99% coverage" src="https://img.shields.io/badge/coverage-99%25-2ea44f">
-  <a href="LICENSE"><img alt="MIT License" src="https://img.shields.io/badge/license-MIT-2ea44f"></a>
+  <a href="https://github.com/bal16/Wave-MusicPlayer/releases/latest"><img alt="Release" src="https://shieldcn.dev/github/release/bal16/Wave-MusicPlayer.svg?variant=branded&amp;logo=github"></a>
+  <img alt="Python 3.11+" src="https://shieldcn.dev/badge/python-3.11%2B-3776AB.svg?variant=branded&amp;logo=python">
+  <img alt="CustomTkinter" src="https://shieldcn.dev/badge/UI-CustomTkinter-1f6feb.svg?variant=branded">
+  <img alt="SQLite" src="https://shieldcn.dev/badge/storage-SQLite-003B57.svg?variant=branded&amp;logo=sqlite">
+  <img alt="VLC and miniaudio" src="https://shieldcn.dev/badge/audio-VLC%20%7C%20miniaudio-FF8800.svg?variant=branded&amp;logo=vlcmediaplayer">
+  <img alt="Linux x86_64" src="https://shieldcn.dev/badge/platform-Linux%20x86__64-333333.svg?variant=branded&amp;logo=linux">
+  <img alt="462 tests" src="https://shieldcn.dev/badge/tests-462%20passed-2ea44f.svg?variant=branded&amp;logo=pytest">
+  <img alt="99% coverage" src="https://shieldcn.dev/badge/coverage-99%25-2ea44f.svg?variant=branded">
+  <a href="LICENSE"><img alt="MIT License" src="https://shieldcn.dev/github/license/bal16/Wave-MusicPlayer.svg?variant=branded&amp;logo=github"></a>
 </p>
 
 A desktop music player for the music you already own. Point it at a folder and it builds a local library you can browse, favorite, organize into playlists, and play. No account, no streaming, no network calls.
