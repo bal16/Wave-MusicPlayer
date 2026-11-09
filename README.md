@@ -1,6 +1,6 @@
 <p align="center">
   <picture>
-    <source media="(prefers-color-scheme: dark)" srcset="assets/icons/logo.png">
+    <source media="(prefers-color-scheme: dark)" srcset="assets/icons/logo.webp">
     <img src="docs/assets/logo-light.png" alt="Wave Music Player" width="220">
   </picture>
 </p>
